@@ -1,158 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>进度回复 - 控制台 (云开发版)</title>
-  <link rel="stylesheet" href="css/style.css">
-  <style>
-    .console-nav{display:flex;gap:4px;flex-wrap:wrap;padding:12px 16px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);border-radius:10px;margin-bottom:18px;align-items:center;}
-    .c-tab{padding:8px 18px;border:none;background:rgba(255,255,255,0.08);color:#aaa;cursor:pointer;border-radius:6px;font-size:13px;transition:all .2s;}
-    .c-tab.active{background:#667eea;color:#fff;font-weight:600;box-shadow:0 2px 12px rgba(102,126,234,.4);}
-    .c-tab:hover:not(.active){background:rgba(255,255,255,0.15);color:#fff;}
-    .c-card{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.08);}
-    .c-card h3{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:8px;}
-    .stat-grid-c{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
-    .stat-box{background:linear-gradient(135deg,#f8f9ff,#eef1ff);border-radius:10px;padding:14px;text-align:center;border:1px solid #e0e5f0;}
-    .stat-box .num{font-size:24px;font-weight:700;color:#333;}
-    .stat-box .lbl{font-size:11px;color:#888;margin-top:2px;}
-    .user-table{width:100%;border-collapse:collapse;font-size:13px;}
-    .user-table th{background:#f5f7ff;padding:9px 10px;text-align:left;font-weight:500;color:#555;border-bottom:2px solid #ddd;}
-    .user-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:middle;}
-    .user-table tr:hover{background:#fafbff;}
-    .role-badge-s{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:500;}
-    .role-super{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
-    .role-admin{background:#e8f0fe;color:#1a56db;}
-    .role-wh{background:#fef9e7;color:#b8860b;}
-    .role-sales{background:#e8f5e9;color:#2e7d32;}
-    .form-row-c{display:flex;gap:12px;flex-wrap:wrap;}
-    .form-group-c{flex:1;min-width:150px;margin-bottom:12px;}
-    .form-group-c label{display:block;font-size:12px;color:#555;font-weight:500;margin-bottom:4px;}
-    .btn-xs{font-size:11px;padding:3px 10px;border-radius:4px;}
-    .prod-edit-area{border:1.5px solid #667eea;border-radius:10px;padding:14px;background:#fafbff;margin:10px 0;}
-    .order-select-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
-    .order-select-bar select{padding:7px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;}
-    .log-area{background:#1a1a2e;color:#0f0;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;max-height:200px;overflow-y:auto;min-height:60px;}
-    .log-area .lw{color:#888;}
-    .log-area .ls{color:#4ade80;}
-    .log-area .le{color:#f87171;}
-    .log-area .li{color:#60a5fa;}
-  </style>
-</head>
-<body>
-  <header class="header" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);">
-    <div class="container">
-      <h1 style="color:#e0e0e0;">⚙ 控制台 <span style="font-size:11px;opacity:0.5;">☁️云开发</span></h1>
-      <div class="header-info">
-        <div class="user-info">
-          <span id="userName" style="color:#ccc;">-</span>
-          <span class="role-badge" id="userRole" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">超级管理员</span>
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="Auth.logout()" style="background:rgba(255,255,255,0.1);color:#ccc;border-color:rgba(255,255,255,0.2);">退出</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-    <div class="console-nav" id="cNav"></div>
-    <div id="tab-overview"><p style="text-align:center;color:#999;padding:30px;">加载中...</p></div>
-    <div id="tab-accounts" style="display:none;"></div>
-    <div id="tab-orderEdit" style="display:none;">
-      <div class="c-card">
-        <h3>📝 订单完全编辑</h3>
-        <div class="order-select-bar">
-          <label style="font-size:13px;color:#555;">选择订单：</label>
-          <select id="editOrderSel" onchange="loadOrderForEdit(this.value)" style="flex:1;min-width:200px;">
-            <option value="">-- 加载中... --</option>
-          </select>
-          <button class="btn btn-primary btn-sm" onclick="refreshOrderSelect()">🔄 刷新列表</button>
-        </div>
-        <div id="editOrderArea">
-          <p style="text-align:center;color:#999;padding:30px;">请从上方下拉框选择一个订单进行编辑</p>
-        </div>
-      </div>
-    </div>
-    <div id="tab-spManage" style="display:none;"></div>
-    <div id="tab-logs" style="display:none;">
-      <div class="c-card">
-        <h3>📋 操作记录</h3>
-        <div id="logArea" class="log-area"><div class="lw">等待操作...</div></div>
-      </div>
-    </div>
-  </main>
-
-  <footer class="footer" style="background:#1a1a2e;color:#555;">&copy; 控制台 · 系统管理 · ☁️ 云开发版</footer>
-
-  <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.28.6/cloudbase.full.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/app.js"></script>
-  <script>
-    const TABS = [
-      {id:'overview',icon:'📊',label:'系统总览'},
-      {id:'accounts',icon:'👤',label:'账号管理'},
-      {id:'orderEdit',icon:'✏️',label:'订单编辑'},
-      {id:'spManage',icon:'👥',label:'业务员'},
-      {id:'logs',icon:'📋',label:'操作日志'}
-    ];
-    let activeTab = 'overview';
-    const logs = [];
-    if (!Auth.isSuper()) { window.location.href = 'login.html'; } else { initC(); }
-
-    function log(msg,type){const t={i:'li',s:'ls',e:'le',w:'lw'}[type]||'lw';logs.push({m:msg,t:t,dt:new Date().toLocaleTimeString()});renderLogs();}
-
-    function initC(){
-      const user = Auth.getUser();
-      document.getElementById('userName').textContent = (user && user.full_name) || 'Admin';
-      renderNav();
-      switchTab('overview');
-    }
-
-    function renderNav(){
-      const nav=document.getElementById('cNav');
-      nav.innerHTML=TABS.map(t=>`<button class="c-tab${t.id===activeTab?' active':''}" onclick="switchTab('${t.id}')">${t.icon} ${t.label}</button>`).join('');
-    }
-
-    function switchTab(id){
-      activeTab=id;
-      renderNav();
-      TABS.forEach(t=>{const el=document.getElementById('tab-'+t.id);el&&(el.style.display=t.id===id?'':'none');});
-      if(id==='overview')loadOverview();
-      if(id==='accounts')loadAccounts();
-      if(id==='orderEdit'){refreshOrderSelect();document.getElementById('editOrderArea').innerHTML='<p style="text-align:center;color:#999;padding:30px;">请从上方下拉框选择一个订单进行编辑</p>';}
-      if(id==='spManage')loadSpManage();
-      if(id==='logs')renderLogs();
-    }
-
-    // ======== Overview ========
-    async function loadOverview(){
-      const c=document.getElementById('tab-overview');
-      c.innerHTML=`<div class="stat-grid-c"><div class="stat-box"><div class="num" id="oTotal">-</div><div class="lbl">总订单</div></div><div class="stat-box"><div class="num" id="oUsers">-</div><div class="lbl">注册用户</div></div><div class="stat-box"><div class="num" id="oSp">-</div><div class="lbl">业务员</div></div><div class="stat-box"><div class="num" id="oActive">-</div><div class="lbl">活跃订单</div></div></div><div id="oDetail" class="c-card"><h3>📈 各状态分布</h3><p style="color:#999;">加载中...</p></div><div class="c-card" style="margin-top:12px;display:flex;align-items:center;gap:12px;"><strong>💾 数据备份</strong><button class="btn btn-primary btn-sm" onclick="backupAll()">📥 导出 JSON</button><span style="font-size:11px;color:#999;">全量数据备份</span></div>`;
-      try{
-        const stats=await API.getOrderStats();
-        document.getElementById('oTotal').textContent=stats?.total??'-';
-        document.getElementById('oActive').textContent=((stats?.by_status?.['调货中']||0)+(stats?.by_status?.['路途中']||0))||'-';
-        const users=await API.getAllUsers();
-        document.getElementById('oUsers').textContent=(users?.data||[]).length;
-        const spData=await API.getAllSalespeople(true);
-        document.getElementById('oSp').textContent=(spData?.data||[]).filter(s=>s.is_active!==false).length;
-        let h='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-        ['调货中','路途中','已到货','已完结'].forEach(s=>{const n=stats?.by_status?.[s]||0;const cl={'调货中':'#e67e22','路途中':'#3498db','已到货':'#27ae60','已完结':'#95a5a6'}[s];h+=`<div style="background:${cl}15;color:${cl};padding:12px 20px;border-radius:8px;text-align:center;min-width:100px;"><div style="font-size:22px;font-weight:700;">${n}</div><div style="font-size:11px;">${s}</div></div>`;});
-        h+='</div>';
-        document.getElementById('oDetail').innerHTML=`<h3>📈 各状态分布</h3>${h}`;
-        log('加载系统总览完成','s');
-      }catch(e){document.getElementById('oDetail').innerHTML='<h3>⚠️ 加载失败</h3><p style="color:#f87171;">'+String(e.message||e)+'</p>';log('总览加载失败: '+e,'e');}
-    }
-
-    // ======== Accounts ========
-    async function loadAccounts(){
-      const c=document.getElementById('tab-accounts');
-      c.innerHTML='<div class="c-card"><h3>👤 全部账号</h3><p style="color:#999;">加载中...</p></div>';
-      try{
-        const r=await API.getAllUsers();
-        const users=r.data||[];
-        let h=`<div class="c-card"><h3>👤 全部账号 (${users.length})</h3>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>进度回复 - 控制台 (云开发版)</title><link rel="stylesheet" href="css/style.css"><style>.console-nav{display:flex;gap:4px;flex-wrap:wrap;padding:12px 16px;background:linear-gradient(135deg,#1a1a2e 0,#16213e 50%,#0f3460 100%);border-radius:10px;margin-bottom:18px;align-items:center}.c-tab{padding:8px 18px;border:none;background:rgba(255,255,255,.08);color:#aaa;cursor:pointer;border-radius:6px;font-size:13px;transition:all .2s}.c-tab.active{background:#667eea;color:#fff;font-weight:600;box-shadow:0 2px 12px rgba(102,126,234,.4)}.c-tab:hover:not(.active){background:rgba(255,255,255,.15);color:#fff}.c-card{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.08)}.c-card h3{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:8px}.stat-grid-c{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:18px}.stat-box{background:linear-gradient(135deg,#f8f9ff,#eef1ff);border-radius:10px;padding:14px;text-align:center;border:1px solid #e0e5f0}.stat-box .num{font-size:24px;font-weight:700;color:#333}.stat-box .lbl{font-size:11px;color:#888;margin-top:2px}.user-table{width:100%;border-collapse:collapse;font-size:13px}.user-table th{background:#f5f7ff;padding:9px 10px;text-align:left;font-weight:500;color:#555;border-bottom:2px solid #ddd}.user-table td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:middle}.user-table tr:hover{background:#fafbff}.role-badge-s{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:500}.role-super{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}.role-admin{background:#e8f0fe;color:#1a56db}.role-wh{background:#fef9e7;color:#b8860b}.role-sales{background:#e8f5e9;color:#2e7d32}.form-row-c{display:flex;gap:12px;flex-wrap:wrap}.form-group-c{flex:1;min-width:150px;margin-bottom:12px}.form-group-c label{display:block;font-size:12px;color:#555;font-weight:500;margin-bottom:4px}.btn-xs{font-size:11px;padding:3px 10px;border-radius:4px}.prod-edit-area{border:1.5px solid #667eea;border-radius:10px;padding:14px;background:#fafbff;margin:10px 0}.order-select-bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}.order-select-bar select{padding:7px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px}.log-area{background:#1a1a2e;color:#0f0;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;max-height:200px;overflow-y:auto;min-height:60px}.log-area .lw{color:#888}.log-area .ls{color:#4ade80}.log-area .le{color:#f87171}.log-area .li{color:#60a5fa}</style></head><body><header class="header" style="background:linear-gradient(135deg,#1a1a2e 0,#16213e 100%)"><div class="container"><h1 style="color:#e0e0e0">⚙ 控制台 <span style="font-size:11px;opacity:.5">☁️云开发</span></h1><div class="header-info"><div class="user-info"><span id="userName" style="color:#ccc">-</span> <span class="role-badge" id="userRole" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff">超级管理员</span></div><button class="btn btn-secondary btn-sm" onclick="Auth.logout()" style="background:rgba(255,255,255,.1);color:#ccc;border-color:rgba(255,255,255,.2)">退出</button></div></div></header><main class="container"><div class="console-nav" id="cNav"></div><div id="tab-overview"><p style="text-align:center;color:#999;padding:30px">加载中...</p></div><div id="tab-accounts" style="display:none"></div><div id="tab-orderEdit" style="display:none"><div class="c-card"><h3>📝 订单完全编辑</h3><div class="order-select-bar"><label style="font-size:13px;color:#555">选择订单：</label> <select id="editOrderSel" onchange="loadOrderForEdit(this.value)" style="flex:1;min-width:200px"><option value="">-- 加载中... --</option></select> <button class="btn btn-primary btn-sm" onclick="refreshOrderSelect()">🔄 刷新列表</button></div><div id="editOrderArea"><p style="text-align:center;color:#999;padding:30px">请从上方下拉框选择一个订单进行编辑</p></div></div></div><div id="tab-spManage" style="display:none"></div><div id="tab-logs" style="display:none"><div class="c-card"><h3>📋 操作记录</h3><div id="logArea" class="log-area"><div class="lw">等待操作...</div></div></div></div></main><footer class="footer" style="background:#1a1a2e;color:#555">&copy; 控制台 · 系统管理 · ☁️ 云开发版</footer><script src="https://static.cloudbase.net/cloudbase-js-sdk/2.28.6/cloudbase.full.js"></script><script src="js/config.js"></script><script src="js/auth.js"></script><script src="js/api.js"></script><script src="js/app.js"></script><script>let TABS=[{id:"overview",icon:"📊",label:"系统总览"},{id:"accounts",icon:"👤",label:"账号管理"},{id:"orderEdit",icon:"✏️",label:"订单编辑"},{id:"spManage",icon:"👥",label:"业务员"},{id:"logs",icon:"📋",label:"操作日志"}],activeTab="overview",logs=[];function log(e,t){t={i:"li",s:"ls",e:"le",w:"lw"}[t]||"lw";logs.push({m:e,t:t,dt:(new Date).toLocaleTimeString()}),renderLogs()}function initC(){var e=Auth.getUser();document.getElementById("userName").textContent=e&&e.full_name||"Admin",renderNav(),switchTab("overview")}function renderNav(){document.getElementById("cNav").innerHTML=TABS.map(e=>`<button class="c-tab${e.id===activeTab?" active":""}" onclick="switchTab('${e.id}')">${e.icon} ${e.label}</button>`).join("")}function switchTab(d){activeTab=d,renderNav(),TABS.forEach(e=>{var t=document.getElementById("tab-"+e.id);t&&(t.style.display=e.id===d?"":"none")}),"overview"===d&&loadOverview(),"accounts"===d&&loadAccounts(),"orderEdit"===d&&(refreshOrderSelect(),document.getElementById("editOrderArea").innerHTML='<p style="text-align:center;color:#999;padding:30px;">请从上方下拉框选择一个订单进行编辑</p>'),"spManage"===d&&loadSpManage(),"logs"===d&&renderLogs()}async function loadOverview(){document.getElementById("tab-overview").innerHTML='<div class="stat-grid-c"><div class="stat-box"><div class="num" id="oTotal">-</div><div class="lbl">总订单</div></div><div class="stat-box"><div class="num" id="oUsers">-</div><div class="lbl">注册用户</div></div><div class="stat-box"><div class="num" id="oSp">-</div><div class="lbl">业务员</div></div><div class="stat-box"><div class="num" id="oActive">-</div><div class="lbl">活跃订单</div></div></div><div id="oDetail" class="c-card"><h3>📈 各状态分布</h3><p style="color:#999;">加载中...</p></div><div class="c-card" style="margin-top:12px;display:flex;align-items:center;gap:12px;"><strong>💾 数据备份</strong><button class="btn btn-primary btn-sm" onclick="backupAll()">📥 导出 JSON</button><span style="font-size:11px;color:#999;">全量数据备份</span></div>';try{let o=await API.getOrderStats();document.getElementById("oTotal").textContent=o?.total??"-",document.getElementById("oActive").textContent=(o?.by_status?.["调货中"]||0)+(o?.by_status?.["路途中"]||0)||"-";var e=await API.getAllUsers(),t=(document.getElementById("oUsers").textContent=(e?.data||[]).length,await API.getAllSalespeople(!0));document.getElementById("oSp").textContent=(t?.data||[]).filter(e=>!1!==e.is_active).length;let a='<div style="display:flex;gap:10px;flex-wrap:wrap;">';["调货中","路途中","已到货","已完结"].forEach(e=>{var t=o?.by_status?.[e]||0,d={"调货中":"#e67e22","路途中":"#3498db","已到货":"#27ae60","已完结":"#95a5a6"}[e];a+=`<div style="background:${d}15;color:${d};padding:12px 20px;border-radius:8px;text-align:center;min-width:100px;"><div style="font-size:22px;font-weight:700;">${t}</div><div style="font-size:11px;">${e}</div></div>`}),a+="</div>",document.getElementById("oDetail").innerHTML="<h3>📈 各状态分布</h3>"+a,log("加载系统总览完成","s")}catch(e){document.getElementById("oDetail").innerHTML='<h3>⚠️ 加载失败</h3><p style="color:#f87171;">'+String(e.message||e)+"</p>",log("总览加载失败: "+e,"e")}}async function loadAccounts(){var t=document.getElementById("tab-accounts");t.innerHTML='<div class="c-card"><h3>👤 全部账号</h3><p style="color:#999;">加载中...</p></div>';try{var e=(await API.getAllUsers()).data||[];let a=`<div class="c-card"><h3>👤 全部账号 (${e.length})</h3>
           <div style="margin-bottom:16px;padding:14px;background:#f0f4ff;border-radius:10px;border:1px dashed #99aaff;">
             <h4 style="margin:0 0 10px 0;font-size:14px;">➕ 创建新账号</h4>
             <form id="createUserForm" onsubmit="createAccount(event)" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
@@ -162,278 +8,50 @@
               <button type="submit" class="btn btn-primary btn-sm">创建</button>
             </form>
           </div>
-          <table class="user-table"><tr><th>ID</th><th>邮箱</th><th>姓名</th><th>角色</th><th>创建时间</th><th>操作</th></tr>`;
-        users.forEach(u=>{
-          const rn={super_admin:'role-super',admin:'role-admin',warehouse:'role-wh',sales:'role-sales'}[u.role]||'';
-          const rl={super_admin:'超级管理员',admin:'管理员',warehouse:'仓库人员',sales:'业务员'}[u.role]||u.role;
-          const uid = u._id || u.id;
-          h+=`<tr><td style="font-family:monospace;font-size:10px;color:#aaa;">${uid.substring(0,8)}...</td><td>${App.escapeHtml(u.email)}</td><td>${App.escapeHtml(u.full_name||'-')}</td><td><span class="role-badge-s ${rn}">${rl}</span></td><td style="font-size:11px;color:#999;">${App.formatDate(u.created_at)}</td><td style="display:flex;gap:4px;flex-wrap:wrap;">`;
-          if(u.role!=='super_admin'){
-            h+=`<select onchange="changeUserRole('${uid}',this.value)" style="font-size:11px;padding:2px 6px;border-radius:4px;"><option value="">角色</option><option value="admin" ${u.role==='admin'?'selected':''}>管理员</option><option value="warehouse" ${u.role==='warehouse'?'selected':''}>仓库</option><option value="sales" ${u.role==='sales'?'selected':''}>业务员</option></select>
-              <button class="btn btn-xs" style="background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;" onclick="resetPassword('${uid}')">🔑 改密</button>
-              <button class="btn btn-xs" style="background:#fee;color:#c00;border:1px solid #fcc;" onclick="deleteAccount('${uid}','${App.escapeHtml(u.email)}')">🗑 删除</button>`;
-          } else {
-            h+=`<span style="font-size:11px;color:#aaa;">🔒 超管</span>`;
-          }
-          h+='</td></tr>';
-        });
-        h+='</table></div>';
-        c.innerHTML=h;
-      }catch(e){c.innerHTML='<div class="c-card"><h3>⚠️ 加载失败</h3><p style="color:#f87171;">'+String(e.message||e)+'</p></div>';}
-    }
-
-    // CloudBase 云函数调用（替代 Supabase Edge Function）
-    async function callAdminFn(body) {
-      try {
-        const result = await TCB.callFunction({ name: 'admin-ops', data: body });
-        if (result && result.result) return result.result;
-        alert('操作失败: ' + (result?.error || '未知错误'));
-        return null;
-      } catch(e) {
-        const msg = e.message || String(e);
-        if (msg.includes('not found') || msg.includes('FUNCTION_NOT_FOUND') || msg.includes('not exist')) {
-          alert('⚠️ 云函数「admin-ops」尚未部署！\n\n请在 CloudBase 控制台上传云函数：\n1. 打开 云开发控制台 → 云函数\n2. 点击「新建云函数」\n3. 上传 cloudbase/cloudfunctions/admin-ops/ 目录\n4. 完成后刷新本页重试');
-        } else {
-          alert('操作失败: ' + msg);
-        }
-        return null;
-      }
-    }
-
-    async function createAccount(e){
-      e.preventDefault();
-      const email=document.getElementById('newEmail').value.trim();
-      const password=document.getElementById('newPassword').value;
-      const role=document.getElementById('newRole').value;
-      if(!email||!password){showToast('邮箱和密码必填','error');return;}
-      if(password.length<6){showToast('密码至少6位','error');return;}
-      const result=await callAdminFn({action:'create-user',email,password,role});
-      if(result && result.success){showToast('✅ 账号已创建','success');log('创建账号 '+email,'s');loadAccounts();}
-    }
-
-    async function deleteAccount(uid,email){
-      if(!confirm('⚠️ 确定删除账号「'+email+'」？此操作不可恢复！'))return;
-      const result=await callAdminFn({action:'delete-user',user_id:uid});
-      if(result && result.success){showToast('✅ 账号已删除','success');log('删除账号 '+email,'w');loadAccounts();}
-    }
-
-    async function resetPassword(uid){
-      const pw=prompt('请输入新密码（至少6位）：');
-      if(!pw)return;
-      if(pw.length<6){showToast('密码至少6位','error');return;}
-      const result=await callAdminFn({action:'reset-password',user_id:uid,new_password:pw});
-      if(result && result.success){showToast('✅ 密码已重置','success');log('重置密码 '+uid,'s');}
-    }
-
-    async function changeUserRole(uid,newRole){
-      if(!newRole)return;
-      if(!confirm('确定要修改此用户的角色吗？'))return;
-      const {error}=await API.updateUserRole(uid,newRole);
-      if(error){showToast('修改失败: '+error.message,'error');}
-      else{showToast('✅ 角色已更新 → '+newRole,'success');log(`用户角色 → ${newRole}`,'s');loadAccounts();}
-    }
-
-    // ======== Order Edit ========
-    let allOrders=[];
-    async function refreshOrderSelect(){
-      const sel=document.getElementById('editOrderSel');
-      try{
-        const r=await API.getOrders();
-        allOrders=r.data||[];
-        sel.innerHTML='<option value="">-- 选择订单 --</option>'+allOrders.map(o=>`<option value="${o._id||o.id}">${App.escapeHtml(o.invoice_no)} | ${o.salesperson_name||'-'} | ${o.order_date||'-'} | ${o.quantity||'-'}</option>`).join('');
-        log('加载了 '+allOrders.length+' 个订单','i');
-      }catch(e){sel.innerHTML='<option value="">⚠️ 加载失败</option>';}
-    }
-
-    async function loadOrderForEdit(oid){
-      if(!oid)return;
-      const area=document.getElementById('editOrderArea');
-      area.innerHTML='<p style="text-align:center;color:#999;padding:20px;">加载中...</p>';
-      const order=allOrders.find(o=>(o._id||o.id)===oid);
-      if(!order){area.innerHTML='<p style="color:#f87171;">未找到订单数据</p>';return;}
-      renderEditForm(order);
-    }
-
-    function renderEditForm(order){
-      const area=document.getElementById('editOrderArea');
-      const oid=order._id||order.id;
-      let products=[];
-      if(typeof order.product_model==='string'&&order.product_model.startsWith('[')){try{products=JSON.parse(order.product_model);}catch(e){}}
-      let prodRows='';
-      window._ePrc=0;
-      if(products&&products.length) products.forEach(p=>{prodRows+=eAddRowHTML(p);});
-      else prodRows=eAddRowHTML();
-      updateESumDeferred();
-
-      area.innerHTML=`
+          <table class="user-table"><tr><th>ID</th><th>邮箱</th><th>姓名</th><th>角色</th><th>创建时间</th><th>操作</th></tr>`;e.forEach(e=>{var t={super_admin:"role-super",admin:"role-admin",warehouse:"role-wh",sales:"role-sales"}[e.role]||"",d={super_admin:"超级管理员",admin:"管理员",warehouse:"仓库人员",sales:"业务员"}[e.role]||e.role,o=e._id||e.id;a+=`<tr><td style="font-family:monospace;font-size:10px;color:#aaa;">${o.substring(0,8)}...</td><td>${App.escapeHtml(e.email)}</td><td>${App.escapeHtml(e.full_name||"-")}</td><td><span class="role-badge-s ${t}">${d}</span></td><td style="font-size:11px;color:#999;">${App.formatDate(e.created_at)}</td><td style="display:flex;gap:4px;flex-wrap:wrap;">`,"super_admin"!==e.role?a+=`<select onchange="changeUserRole('${o}',this.value)" style="font-size:11px;padding:2px 6px;border-radius:4px;"><option value="">角色</option><option value="admin" ${"admin"===e.role?"selected":""}>管理员</option><option value="warehouse" ${"warehouse"===e.role?"selected":""}>仓库</option><option value="sales" ${"sales"===e.role?"selected":""}>业务员</option></select>
+              <button class="btn btn-xs" style="background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;" onclick="resetPassword('${o}')">🔑 改密</button>
+              <button class="btn btn-xs" style="background:#fee;color:#c00;border:1px solid #fcc;" onclick="deleteAccount('${o}','${App.escapeHtml(e.email)}')">🗑 删除</button>`:a+='<span style="font-size:11px;color:#aaa;">🔒 超管</span>',a+="</td></tr>"}),a+="</table></div>",t.innerHTML=a}catch(e){t.innerHTML='<div class="c-card"><h3>⚠️ 加载失败</h3><p style="color:#f87171;">'+String(e.message||e)+"</p></div>"}}async function callAdminFn(t){try{var e=await TCB.callFunction({name:"admin-ops",data:t});return e&&e.result?e.result:(alert("操作失败: "+(e?.error||"未知错误")),null)}catch(e){t=e.message||String(e);return t.includes("not found")||t.includes("FUNCTION_NOT_FOUND")||t.includes("not exist")?alert("⚠️ 云函数「admin-ops」尚未部署！\n\n请在 CloudBase 控制台上传云函数：\n1. 打开 云开发控制台 → 云函数\n2. 点击「新建云函数」\n3. 上传 cloudbase/cloudfunctions/admin-ops/ 目录\n4. 完成后刷新本页重试"):alert("操作失败: "+t),null}}async function createAccount(e){e.preventDefault();var e=document.getElementById("newEmail").value.trim(),t=document.getElementById("newPassword").value,d=document.getElementById("newRole").value;e&&t?t.length<6?showToast("密码至少6位","error"):(t=await callAdminFn({action:"create-user",email:e,password:t,role:d}))&&t.success&&(showToast("✅ 账号已创建","success"),log("创建账号 "+e,"s"),loadAccounts()):showToast("邮箱和密码必填","error")}async function deleteAccount(e,t){confirm("⚠️ 确定删除账号「"+t+"」？此操作不可恢复！")&&(e=await callAdminFn({action:"delete-user",user_id:e}))&&e.success&&(showToast("✅ 账号已删除","success"),log("删除账号 "+t,"w"),loadAccounts())}async function resetPassword(e){var t=prompt("请输入新密码（至少6位）：");t&&(t.length<6?showToast("密码至少6位","error"):(t=await callAdminFn({action:"reset-password",user_id:e,new_password:t}))&&t.success&&(showToast("✅ 密码已重置","success"),log("重置密码 "+e,"s")))}async function changeUserRole(e,t){t&&confirm("确定要修改此用户的角色吗？")&&(e=(await API.updateUserRole(e,t)).error,e?showToast("修改失败: "+e.message,"error"):(showToast("✅ 角色已更新 → "+t,"success"),log("用户角色 → "+t,"s"),loadAccounts()))}Auth.isSuper()?initC():window.location.href="login.html";let allOrders=[];async function refreshOrderSelect(){var t=document.getElementById("editOrderSel");try{var e=await API.getOrders();allOrders=e.data||[],t.innerHTML='<option value="">-- 选择订单 --</option>'+allOrders.map(e=>`<option value="${e._id||e.id}">${App.escapeHtml(e.invoice_no)} | ${e.salesperson_name||"-"} | ${e.order_date||"-"} | ${e.quantity||"-"}</option>`).join(""),log("加载了 "+allOrders.length+" 个订单","i")}catch(e){t.innerHTML='<option value="">⚠️ 加载失败</option>'}}async function loadOrderForEdit(t){var e,d;t&&((e=document.getElementById("editOrderArea")).innerHTML='<p style="text-align:center;color:#999;padding:20px;">加载中...</p>',(d=allOrders.find(e=>(e._id||e.id)===t))?renderEditForm(d):e.innerHTML='<p style="color:#f87171;">未找到订单数据</p>')}function renderEditForm(t){var e=document.getElementById("editOrderArea"),d=t._id||t.id;let o=[];if("string"==typeof t.product_model&&t.product_model.startsWith("["))try{o=JSON.parse(t.product_model)}catch(e){}let a="";window._ePrc=0,o&&o.length?o.forEach(e=>{a+=eAddRowHTML(e)}):a=eAddRowHTML(),updateESumDeferred(),e.innerHTML=`
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-  <h4 style="margin:0;color:#333;">📝 编辑: <strong>${App.escapeHtml(order.invoice_no)}</strong></h4>
-  <button class="btn btn-danger btn-sm" onclick="deleteOrderHere('${oid}')">🗑 删除此单</button>
+  <h4 style="margin:0;color:#333;">📝 编辑: <strong>${App.escapeHtml(t.invoice_no)}</strong></h4>
+  <button class="btn btn-danger btn-sm" onclick="deleteOrderHere('${d}')">🗑 删除此单</button>
 </div>
-<form id="editForm" onsubmit="saveEditedOrder(event,'${oid}')">
+<form id="editForm" onsubmit="saveEditedOrder(event,'${d}')">
   <div class="form-row-c">
-    <div class="form-group-c"><label>到款单号 *</label><input type="text" id="e_invoice_no" value="${App.escapeHtml(order.invoice_no)}" required style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
-    <div class="form-group-c"><label>单据日期</label><input type="date" id="e_order_date" value="${order.order_date||''}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
-    <div class="form-group-c"><label>总数量</label><input type="number" id="e_quantity" value="${order.quantity||0}" min="0" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
+    <div class="form-group-c"><label>到款单号 *</label><input type="text" id="e_invoice_no" value="${App.escapeHtml(t.invoice_no)}" required style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
+    <div class="form-group-c"><label>单据日期</label><input type="date" id="e_order_date" value="${t.order_date||""}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
+    <div class="form-group-c"><label>总数量</label><input type="number" id="e_quantity" value="${t.quantity||0}" min="0" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
   </div>
   <div class="form-row-c">
     <div class="form-group-c"><label>状态</label><select id="e_order_status" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;">
-      <option value="">- 待填写 -</option>${CONFIG.ORDER_STATUSES.map(s=>`<option value="${s}" ${s===order.order_status?'selected':''}>${s}</option>`).join('')}
+      <option value="">- 待填写 -</option>${CONFIG.ORDER_STATUSES.map(e=>`<option value="${e}" ${e===t.order_status?"selected":""}>${e}</option>`).join("")}
     </select></div>
-    <div class="form-group-c"><label>业务员</label><input type="text" id="e_salesperson_name" value="${App.escapeHtml(order.salesperson_name||'')}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
-    <div class="form-group-c"><label>预计发货时间</label><input type="date" id="e_shipping_date" value="${order.shipping_date||''}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
+    <div class="form-group-c"><label>业务员</label><input type="text" id="e_salesperson_name" value="${App.escapeHtml(t.salesperson_name||"")}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
+    <div class="form-group-c"><label>预计发货时间</label><input type="date" id="e_shipping_date" value="${t.shipping_date||""}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
   </div>
   <div class="form-row-c">
-    <div class="form-group-c"><label>进度回复</label><input type="text" id="e_warehouse_notes" value="${App.escapeHtml(order.warehouse_notes||'')}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
+    <div class="form-group-c"><label>进度回复</label><input type="text" id="e_warehouse_notes" value="${App.escapeHtml(t.warehouse_notes||"")}" style="width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"></div>
   </div>
   <div class="prod-edit-area">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><label style="font-size:13px;font-weight:500;color:#444;">📦 产品明细</label><span id="eProdSum" style="font-size:12px;color:#667eea;"></span></div>
     <div style="display:flex;gap:6px;padding:6px 8px;background:#f0f4ff;border-radius:6px;font-size:11px;color:#666;"><span style="width:28px;"></span><span style="flex:1;">品牌</span><span style="flex:1.4;">型号</span><span style="width:50px;text-align:center;">数量</span><span style="flex:1;">货期</span><span style="width:24px;"></span></div>
-    <div id="eProductRows">${prodRows}</div>
+    <div id="eProductRows">${a}</div>
     <div style="display:flex;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd;">
       <button type="button" onclick="eAddRow()" style="padding:5px 14px;background:#f0f4ff;color:#667eea;border:1px dashed #99aaff;border-radius:5px;font-size:12px;cursor:pointer;">+ 添加行</button>
     </div>
   </div>
   <div style="margin-top:16px;display:flex;gap:10px;">
     <button type="submit" class="btn btn-primary">💾 保存全部修改</button>
-    <button type="button" class="btn btn-secondary" onclick="refreshOrderSelect();document.getElementById('editOrderSel').value='${oid}';loadOrderForEdit('${oid}');">↺ 重置</button>
+    <button type="button" class="btn btn-secondary" onclick="refreshOrderSelect();document.getElementById('editOrderSel').value='${d}';loadOrderForEdit('${d}');">↺ 重置</button>
   </div>
-</form>`;
-
-      document.querySelectorAll('#eProductRows input').forEach(i=>i.addEventListener('input',updateESumDeferred));
-      updateESumDeferred();
-    }
-
-    function eAddRowHTML(data){
-      window._ePrc=(window._ePrc||0)+1;
-      const n=window._ePrc;
-      return `<div id="eprow-${n}" style="display:flex;gap:6px;align-items:center;padding:6px 8px;margin-bottom:3px;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0;">
-        <span style="font-size:11px;color:#aaa;width:28px;">#${n}</span>
-        <input type="text" placeholder="品牌" value="${App.escapeHtml(data?data.brand||'':'')}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-b">
-        <input type="text" placeholder="型号" value="${App.escapeHtml(data?data.model||'':'')}" style="flex:1.4;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-m">
-        <input type="number" placeholder="数量" value="${data?(data.qty||''):''}" min="0" style="width:50px;padding:5px 4px;font-size:12px;border:1px solid #ddd;border-radius:4px;text-align:center;" class="ep-q">
-        <input type="text" placeholder="货期" value="${App.escapeHtml(data?data.delivery||'':'')}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-d">
+</form>`,document.querySelectorAll("#eProductRows input").forEach(e=>e.addEventListener("input",updateESumDeferred)),updateESumDeferred()}function eAddRowHTML(e){window._ePrc=(window._ePrc||0)+1;var t=window._ePrc;return`<div id="eprow-${t}" style="display:flex;gap:6px;align-items:center;padding:6px 8px;margin-bottom:3px;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0;">
+        <span style="font-size:11px;color:#aaa;width:28px;">#${t}</span>
+        <input type="text" placeholder="品牌" value="${App.escapeHtml(e&&e.brand||"")}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-b">
+        <input type="text" placeholder="型号" value="${App.escapeHtml(e&&e.model||"")}" style="flex:1.4;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-m">
+        <input type="number" placeholder="数量" value="${e&&e.qty||""}" min="0" style="width:50px;padding:5px 4px;font-size:12px;border:1px solid #ddd;border-radius:4px;text-align:center;" class="ep-q">
+        <input type="text" placeholder="货期" value="${App.escapeHtml(e&&e.delivery||"")}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-d">
         <button type="button" onclick="this.parentElement.remove();updateESumDeferred();renumE();" style="padding:0 6px;background:none;border:none;cursor:pointer;color:#e24b4a;font-size:17px;">×</button>
-      </div>`;
-    }
-
-    function eAddRow(data){
-      const d=document.getElementById('eProductRows');
-      window._ePrc=(window._ePrc||0)+1;
-      const n=window._ePrc;
-      const row=document.createElement('div');
-      row.style='display:flex;gap:6px;align-items:center;padding:6px 8px;margin-bottom:3px;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0;';
-      row.id='eprow-'+n;
-      row.innerHTML=`<span style="font-size:11px;color:#aaa;width:28px;">#${n}</span><input type="text" placeholder="品牌" value="${App.escapeHtml(data?data.brand||'':'')}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-b"><input type="text" placeholder="型号" value="${App.escapeHtml(data?data.model||'':'')}" style="flex:1.4;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-m"><input type="number" placeholder="数量" value="${data?(data.qty||''):''}" min="0" style="width:50px;padding:5px 4px;font-size:12px;border:1px solid #ddd;border-radius:4px;text-align:center;" class="ep-q"><input type="text" placeholder="货期" value="${App.escapeHtml(data?data.delivery||'':'')}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-d"><button type="button" onclick="this.parentElement.remove();updateESumDeferred();renumE();" style="padding:0 6px;background:none;border:none;cursor:pointer;color:#e24b4a;font-size:17px;">×</button>`;
-      d.appendChild(row);
-      row.querySelectorAll('input').forEach(i=>i.addEventListener('input',updateESumDeferred));
-      updateESumDeferred();
-    }
-
-    function renumE(){document.querySelectorAll('#eProductRows > div').forEach((r,i)=>r.querySelector('span').textContent='#'+(i+1));}
-    function updateESumDeferred(){let t=0,c=0;document.querySelectorAll('#eProductRows .ep-q').forEach(i=>{const v=parseInt(i.value);if(!isNaN(v)&&v>0){t+=v;c++;}});const el=document.getElementById('eProdSum');if(el)el.textContent=c?`${c}产品·总量${t}`:'';}
-
-    function collectEProducts(){
-      const p=[];let ok=false;
-      document.querySelectorAll('#eProductRows > div').forEach(r=>{
-        const b=r.querySelector('.ep-b').value.trim(),m=r.querySelector('.ep-m').value.trim(),qv=r.querySelector('.ep-q').value.trim(),d=r.querySelector('.ep-d').value.trim(),q=qv?parseInt(qv):0;
-        if(m||b){p.push({brand:b,model:m,qty:Math.max(0,q),delivery:d});if(m)ok=true;}
-      });
-      return{products:p,ok};
-    }
-
-    async function saveEditedOrder(e,oid){
-      e.preventDefault();
-      const {products:prods,ok}=collectEProducts();
-      const payload={
-        invoice_no:document.getElementById('e_invoice_no').value.trim(),
-        order_date:document.getElementById('e_order_date').value||null,
-        quantity:parseInt(document.getElementById('e_quantity').value)||0,
-        order_status:document.getElementById('e_order_status').value||null,
-        salesperson_name:document.getElementById('e_salesperson_name').value.trim(),
-        shipping_date:document.getElementById('e_shipping_date').value||null,
-        warehouse_notes:document.getElementById('e_warehouse_notes').value.trim(),
-        product_model:JSON.stringify(prods)
-      };
-      if(!payload.invoice_no||!ok){showToast('到款单号和至少一个型号为必填','error');return;}
-      const{error}=await API.updateOrder(oid,payload);
-      if(error){showToast('保存失败: '+error.message,'error');}
-      else{showToast('✅ 订单已更新！','success');log('订单编辑保存','s');refreshOrderSelect();}
-    }
-
-    async function deleteOrderHere(oid){
-      if(!confirm('⚠️ 确定删除此订单？不可恢复！'))return;
-      const{error}=await API.deleteOrder(oid);
-      if(error){showToast('删除失败: '+error.message,'error');}
-      else{showToast('订单已删除','success');log('订单已删除','s');document.getElementById('editOrderArea').innerHTML='<p style="text-align:center;color:#999;padding:30px;">订单已删除</p>';refreshOrderSelect();}
-    }
-
-    // ======== Salespeople ========
-    async function loadSpManage(){
-      const c=document.getElementById('tab-spManage');
-      try{
-        const r=await API.getAllSalespeople(true);
-        const list=r.data||[];
-        c.innerHTML=`<div class="c-card"><h3>➕ 快速添加</h3><div class="form-row-c" style="margin-bottom:12px;"><input type="text" id="nsp_name" placeholder="姓名" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"><input type="text" id="nsp_code" placeholder="识别码(选填)" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"><button class="btn btn-primary btn-sm" onclick="quickAddSp()">添加</button></div></div>
-<div class="c-card"><h3>👥 全部业务员 (${list.length})</h3><table class="user-table"><tr><th>姓名</th><th>识别码</th><th>状态</th><th>操作</th></tr>`+
-        list.map(sp=>{
-          const ac=sp.is_active!==false;
-          const sid=sp._id||sp.id;
-          return `<tr><td>${App.escapeHtml(sp.name)}</td><td style="font-family:monospace;">${App.escapeHtml(sp.access_code||'-')}</td><td>${ac?'✅ 正常':'⛔ 停用'}</td><td>
-            ${ac?`<button class="btn btn-xs" style="background:#fee;color:#c00;border:1px solid #fcc;" onclick="toggleSpStatus('${sid}',false)">停用</button>`
-              :`<button class="btn btn-xs" style="background:#efe;color:#080;border:1px solid #cfc;" onclick="toggleSpStatus('${sid}',true)">恢复</button>`}
-            <button class="btn btn-xs" style="background:#eef;color:#04c;border:1px solid #dde;" onclick="updateSpCode('${sid}')">改码</button>
-          </td></tr>`;
-        }).join('')+'</table></div>';
-      }catch(e){c.innerHTML='<div class="c-card"><h3>⚠️ 加载失败</h3><p style="color:#f87171;">'+String(e.message||e)+'</p></div>';}
-    }
-
-    async function quickAddSp(){
-      const n=document.getElementById('nsp_name').value.trim(),code=document.getElementById('nsp_code').value.trim();
-      if(!n){showToast('输入姓名','error');return;}
-      const d={name:n,is_active:true};if(code)d.access_code=code.toUpperCase().replace(/[^A-Z0-9]/g,'');
-      const{error}=await API.addSalesperson(d);
-      if(error){showToast(error.message,'error');}
-      else{showToast('已添加','success');log('业务员「'+n+'」已添加','s');document.getElementById('nsp_name').value='';document.getElementById('nsp_code').value='';loadSpManage();}
-    }
-    async function toggleSpStatus(id,active){
-      const{error}=await API.updateSalesperson(id,{is_active:active});
-      if(error)showToast(error.message,'error');else{showToast(active?'已恢复':'已停用','success');loadSpManage();}
-    }
-    async function updateSpCode(id){
-      const newCode=prompt('输入新的识别码:');
-      if(newCode===null)return;
-      const c=newCode.toUpperCase().replace(/[^A-Z0-9]/g,'');
-      if(!c){showToast('无效格式','error');return;}
-      const{error}=await API.updateSalesperson(id,{access_code:c});
-      if(error){showToast(error.message,'error');}
-      else{showToast('识别码 → '+c,'success');loadSpManage();}
-    }
-
-    // ======== Logs ========
-    function renderLogs(){
-      const la=document.getElementById('logArea');
-      if(!logs.length){la.innerHTML='<div class="lw">暂无操作记录</div>';return;}
-      la.innerHTML=logs.slice(-50).reverse().map(l=>`<div><span class="lw">[${l.dt}]</span> <span class="${l.t}">${l.m}</span></div>`).join('');
-    }
-
-    // ======== 数据备份 ========
-    async function backupAll(){
-      showToast('正在导出...','info');
-      try{
-        const [od,us,sp]=await Promise.all([
-          DB.collection(COL.ORDERS).limit(5000).get(),
-          DB.collection(COL.USERS).limit(500).get(),
-          DB.collection(COL.SALESPEOPLE).limit(500).get()
-        ]);
-        const backup={exported_at:new Date().toISOString(),orders:od.data||[],user_profiles:us.data||[],salespeople:sp.data||[]};
-        const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
-        const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-        a.download='backup_cb_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
-        showToast('✅ 备份完成','success');
-        log('全量备份','s');
-      }catch(e){showToast('导出失败: '+e.message,'error');}
-    }
-  </script>
-</body>
-</html>
+      </div>`}function eAddRow(e){var t=document.getElementById("eProductRows"),d=(window._ePrc=(window._ePrc||0)+1,window._ePrc),o=document.createElement("div");o.style="display:flex;gap:6px;align-items:center;padding:6px 8px;margin-bottom:3px;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0;",o.id="eprow-"+d,o.innerHTML=`<span style="font-size:11px;color:#aaa;width:28px;">#${d}</span><input type="text" placeholder="品牌" value="${App.escapeHtml(e&&e.brand||"")}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-b"><input type="text" placeholder="型号" value="${App.escapeHtml(e&&e.model||"")}" style="flex:1.4;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-m"><input type="number" placeholder="数量" value="${e&&e.qty||""}" min="0" style="width:50px;padding:5px 4px;font-size:12px;border:1px solid #ddd;border-radius:4px;text-align:center;" class="ep-q"><input type="text" placeholder="货期" value="${App.escapeHtml(e&&e.delivery||"")}" style="flex:1;padding:5px 7px;font-size:12px;border:1px solid #ddd;border-radius:4px;" class="ep-d"><button type="button" onclick="this.parentElement.remove();updateESumDeferred();renumE();" style="padding:0 6px;background:none;border:none;cursor:pointer;color:#e24b4a;font-size:17px;">×</button>`,t.appendChild(o),o.querySelectorAll("input").forEach(e=>e.addEventListener("input",updateESumDeferred)),updateESumDeferred()}function renumE(){document.querySelectorAll("#eProductRows > div").forEach((e,t)=>e.querySelector("span").textContent="#"+(t+1))}function updateESumDeferred(){let t=0,d=0;document.querySelectorAll("#eProductRows .ep-q").forEach(e=>{e=parseInt(e.value);!isNaN(e)&&0<e&&(t+=e,d++)});var e=document.getElementById("eProdSum");e&&(e.textContent=d?d+"产品·总量"+t:"")}function collectEProducts(){let a=[],r=!1;return document.querySelectorAll("#eProductRows > div").forEach(e=>{var t=e.querySelector(".ep-b").value.trim(),d=e.querySelector(".ep-m").value.trim(),o=e.querySelector(".ep-q").value.trim(),e=e.querySelector(".ep-d").value.trim(),o=o?parseInt(o):0;(d||t)&&(a.push({brand:t,model:d,qty:Math.max(0,o),delivery:e}),d)&&(r=!0)}),{products:a,ok:r}}async function saveEditedOrder(e,t){e.preventDefault();var{products:e,ok:d}=collectEProducts(),e={invoice_no:document.getElementById("e_invoice_no").value.trim(),order_date:document.getElementById("e_order_date").value||null,quantity:parseInt(document.getElementById("e_quantity").value)||0,order_status:document.getElementById("e_order_status").value||null,salesperson_name:document.getElementById("e_salesperson_name").value.trim(),shipping_date:document.getElementById("e_shipping_date").value||null,warehouse_notes:document.getElementById("e_warehouse_notes").value.trim(),product_model:JSON.stringify(e)};e.invoice_no&&d?(d=(await API.updateOrder(t,e)).error,d?showToast("保存失败: "+d.message,"error"):(showToast("✅ 订单已更新！","success"),log("订单编辑保存","s"),refreshOrderSelect())):showToast("到款单号和至少一个型号为必填","error")}async function deleteOrderHere(e){confirm("⚠️ 确定删除此订单？不可恢复！")&&(e=(await API.deleteOrder(e)).error,e?showToast("删除失败: "+e.message,"error"):(showToast("订单已删除","success"),log("订单已删除","s"),document.getElementById("editOrderArea").innerHTML='<p style="text-align:center;color:#999;padding:30px;">订单已删除</p>',refreshOrderSelect()))}async function loadSpManage(){var t=document.getElementById("tab-spManage");try{var e=(await API.getAllSalespeople(!0)).data||[];t.innerHTML=`<div class="c-card"><h3>➕ 快速添加</h3><div class="form-row-c" style="margin-bottom:12px;"><input type="text" id="nsp_name" placeholder="姓名" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"><input type="text" id="nsp_code" placeholder="识别码(选填)" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;"><button class="btn btn-primary btn-sm" onclick="quickAddSp()">添加</button></div></div>
+<div class="c-card"><h3>👥 全部业务员 (${e.length})</h3><table class="user-table"><tr><th>姓名</th><th>识别码</th><th>状态</th><th>操作</th></tr>`+e.map(e=>{var t=!1!==e.is_active,d=e._id||e.id;return`<tr><td>${App.escapeHtml(e.name)}</td><td style="font-family:monospace;">${App.escapeHtml(e.access_code||"-")}</td><td>${t?"✅ 正常":"⛔ 停用"}</td><td>
+            ${t?`<button class="btn btn-xs" style="background:#fee;color:#c00;border:1px solid #fcc;" onclick="toggleSpStatus('${d}',false)">停用</button>`:`<button class="btn btn-xs" style="background:#efe;color:#080;border:1px solid #cfc;" onclick="toggleSpStatus('${d}',true)">恢复</button>`}
+            <button class="btn btn-xs" style="background:#eef;color:#04c;border:1px solid #dde;" onclick="updateSpCode('${d}')">改码</button>
+          </td></tr>`}).join("")+"</table></div>"}catch(e){t.innerHTML='<div class="c-card"><h3>⚠️ 加载失败</h3><p style="color:#f87171;">'+String(e.message||e)+"</p></div>"}}async function quickAddSp(){var e,t=document.getElementById("nsp_name").value.trim(),d=document.getElementById("nsp_code").value.trim();t?(e={name:t,is_active:!0},d&&(e.access_code=d.toUpperCase().replace(/[^A-Z0-9]/g,"")),d=(await API.addSalesperson(e)).error,d?showToast(d.message,"error"):(showToast("已添加","success"),log("业务员「"+t+"」已添加","s"),document.getElementById("nsp_name").value="",document.getElementById("nsp_code").value="",loadSpManage())):showToast("输入姓名","error")}async function toggleSpStatus(e,t){e=(await API.updateSalesperson(e,{is_active:t})).error;e?showToast(e.message,"error"):(showToast(t?"已恢复":"已停用","success"),loadSpManage())}async function updateSpCode(e){var t=prompt("输入新的识别码:");null!==t&&((t=t.toUpperCase().replace(/[^A-Z0-9]/g,""))?(e=(await API.updateSalesperson(e,{access_code:t})).error,e?showToast(e.message,"error"):(showToast("识别码 → "+t,"success"),loadSpManage())):showToast("无效格式","error"))}function renderLogs(){var e=document.getElementById("logArea");logs.length?e.innerHTML=logs.slice(-50).reverse().map(e=>`<div><span class="lw">[${e.dt}]</span> <span class="${e.t}">${e.m}</span></div>`).join(""):e.innerHTML='<div class="lw">暂无操作记录</div>'}async function backupAll(){showToast("正在导出...","info");try{var[e,t,d]=await Promise.all([DB.collection(COL.ORDERS).limit(5e3).get(),DB.collection(COL.USERS).limit(500).get(),DB.collection(COL.SALESPEOPLE).limit(500).get()]),o={exported_at:(new Date).toISOString(),orders:e.data||[],user_profiles:t.data||[],salespeople:d.data||[]},a=new Blob([JSON.stringify(o,null,2)],{type:"application/json"}),r=document.createElement("a");r.href=URL.createObjectURL(a),r.download="backup_cb_"+(new Date).toISOString().slice(0,10)+".json",r.click(),URL.revokeObjectURL(r.href),showToast("✅ 备份完成","success"),log("全量备份","s")}catch(e){showToast("导出失败: "+e.message,"error")}}</script></body></html>
