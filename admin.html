@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>进度回复 - 管理员 (云开发版)</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .form-row-c{display:flex;gap:12px;flex-wrap:wrap;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <h1>📦 进度回复系统 - 管理员 <span style="font-size:11px;opacity:0.6;">☁️云开发</span></h1>
+      <div class="header-info">
+        <div class="user-info">
+          <span id="userName">管理员</span>
+          <span class="role-badge" id="userRole">管理员</span>
+          <span id="superEntry" style="display:none;">
+            <a href="console.html" style="font-size:11px;color:#667eea;text-decoration:none;margin-left:8px;padding:3px 10px;background:#f0f4ff;border-radius:12px;">⚙ 控制台</a>
+          </span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="Auth.logout()">退出登录</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Tab 导航 -->
+    <div class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 数据概览</button>
+      <button class="tab-btn" data-tab="orders" onclick="switchTab('orders')">📋 订单新增</button>
+      <button class="tab-btn" data-tab="salespeople" onclick="switchTab('salespeople')">👥 业务员管理</button>
+    </div>
+
+    <!-- ===== Tab 1: 数据概览 ===== -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card stat-total"><div class="stat-number">-</div><div class="stat-label">总订单数</div></div>
+        <div class="stat-card stat-pending"><div class="stat-number">-</div><div class="stat-label">调货中</div></div>
+        <div class="stat-card stat-transit"><div class="stat-number">-</div><div class="stat-label">路途中</div></div>
+        <div class="stat-card stat-arrived"><div class="stat-number">-</div><div class="stat-label">已到货</div></div>
+        <div class="stat-card stat-completed"><div class="stat-number">-</div><div class="stat-label">已完结</div></div>
+        <div class="stat-card stat-users"><div class="stat-number">-</div><div class="stat-label">业务员人数</div></div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">📈 业务员订单排行</h3>
+        <div id="salesStatsContainer">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab 2: 订单新增 ===== -->
+    <div class="tab-content" id="tab-orders" style="display:none;">
+      <div class="card">
+        <h3 class="card-title">➕ 新增订单</h3>
+        <form id="addOrderForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="invoiceNo">到款单号 / 单号 *</label>
+              <input type="text" id="invoiceNo" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="orderDate">单据日期</label>
+              <input type="date" id="orderDate" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="salespersonName">所属业务员 *</label>
+              <select id="salespersonName" class="form-control" required>
+                <option value=""></option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="salesNotes">业务员备注</label>
+              <input type="text" id="salesNotes" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>📦 产品明细 *</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px;font-size:11px;color:#999;">
+              <span>💡 从Excel/到款单复制粘贴 或 手动逐行添加</span>
+            </div>
+            <div id="productsContainer" style="border:1.5px solid #667eea;border-radius:10px;padding:14px;background:#fafbff;">
+              <div style="display:flex;gap:6px;padding:6px 8px;background:#f0f4ff;border-radius:6px 6px 0 0;font-size:11px;color:#666;font-weight:500;">
+                <span style="width:28px;"></span>
+                <span style="flex:1.1;min-width:60px;">品牌</span>
+                <span style="flex:1.4;min-width:90px;">型号</span>
+                <span style="width:55px;text-align:center;">数量</span>
+                <span style="flex:1;min-width:70px;">货期/交期</span>
+                <span style="width:26px;"></span>
+              </div>
+              <div id="productRows"></div>
+              <div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
+                <button type="button" onclick="addProductRow()" class="btn btn-sm" style="background:#f0f4ff;color:#667eea;border:1px dashed #99aaff;font-size:12px;padding:6px 14px;">+ 添加一行</button>
+                <button type="button" onclick="pasteFromExcel()" class="btn btn-sm" style="background:#fff8e6;color:#b8860b;border:1px dashed #e6c87a;font-size:12px;padding:6px 14px;">📋 从Excel粘贴</button>
+                <span id="productSummary" style="margin-left:auto;font-size:12px;color:#667eea;font-weight:500;align-self:center;"></span>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top:12px;">添加订单</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">📋 全部订单</h3>
+        <div class="filter-bar">
+          <select id="filterStatus" class="form-control" onchange="loadOrders()" style="width:auto;min-width:140px;">
+            <option value="">全部状态</option>
+            <option value="__empty__">- 待填写 -</option>
+            <option value="调货中">调货中</option>
+            <option value="路途中">路途中</option>
+            <option value="已到货">已到货</option>
+            <option value="已完结">已完结</option>
+          </select>
+          <select id="filterSalesperson" class="form-control" onchange="loadOrders()" style="width:auto;min-width:140px;">
+            <option value="">全部业务员</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="loadOrders()">刷新列表</button>
+          <button class="btn btn-sm" onclick="exportOrdersCSV()" style="background:#27ae60;color:#fff;border-color:#27ae60;margin-left:auto;">📥 导出CSV</button>
+          <button class="btn btn-sm" onclick="cleanOldFiles()" style="background:#e07a5f;color:#fff;border-color:#e07a5f;">🧹 清理文件</button>
+        </div>
+        <div id="ordersContainer">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab 3: 业务员管理 ===== -->
+    <div class="tab-content" id="tab-salespeople" style="display:none;">
+      <div class="card">
+        <h3 class="card-title">➕ 添加业务员</h3>
+        <p style="font-size:13px;color:#666;margin-bottom:16px;">业务员独立于登录账号。每个业务员有唯一<strong>识别码</strong>。</p>
+        <form id="addSalespersonForm">
+          <div class="form-row">
+            <div class="form-group" style="max-width:200px;">
+              <label for="newSpName">业务员姓名 *</label>
+              <input type="text" id="newSpName" class="form-control" required>
+            </div>
+            <div class="form-group" style="max-width:180px;">
+              <label for="newSpCode">识别码（选填）</label>
+              <input type="text" id="newSpCode" class="form-control" placeholder="留空自动生成 SPxxx">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">添加业务员</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">👥 业务员列表</h3>
+        <div id="spContainer">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    © <span id="footerYear"></span> 进度回复系统 · 管理员面板 · ☁️ 云开发版
+  </footer>
+
+  <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.28.6/cloudbase.full.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/file-ops.js"></script>
+  <script>
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    let productRowCount = 0;
+
+    if (!Auth.requireRole([CONFIG.ROLES.ADMIN, CONFIG.ROLES.SUPER])) {
+      // 已重定向
+    } else {
+      init();
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+        content.classList.remove('active');
+      });
+      const target = document.getElementById('tab-' + tabName);
+      target.style.display = '';
+      target.classList.add('active');
+      if (tabName === 'dashboard') loadDashboard();
+      if (tabName === 'orders') { loadSalespeopleSelect(); loadOrders(); }
+      if (tabName === 'salespeople') loadSalespeopleList();
+    }
+
+    async function init() {
+      const user = Auth.getUser();
+      document.getElementById('userName').textContent = user.full_name || user.email;
+      document.getElementById('userRole').textContent = App.getRoleName(user.role);
+      if (user.role === CONFIG.ROLES.SUPER) {
+        document.getElementById('superEntry').style.display = '';
+      }
+      document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+      addProductRow();
+      await loadDashboard();
+    }
+
+    // ===== 产品行管理 =====
+    function addProductRow(data) {
+      productRowCount++;
+      const rowId = 'product-row-' + productRowCount;
+      const container = document.getElementById('productRows');
+      const row = document.createElement('div');
+      row.id = rowId;
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;padding:7px 8px;margin-bottom:3px;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0;';
+      row.innerHTML = `
+        <span style="font-size:11px;color:#aaa;width:28px;text-align:center;">#${productRowCount}</span>
+        <input type="text" class="form-control p-brand" placeholder="品牌" value="${App.escapeHtml(data ? data.brand || '' : '')}" style="flex:1.1;min-width:60px;padding:5px 7px;font-size:12px;border-radius:5px;">
+        <input type="text" class="form-control p-model" placeholder="型号" value="${App.escapeHtml(data ? data.model || '' : '')}" style="flex:1.4;min-width:90px;padding:5px 7px;font-size:12px;border-radius:5px;">
+        <input type="number" class="form-control p-qty" placeholder="数量" value="${data ? (data.qty || '') : ''}" min="0" style="width:55px;padding:5px 4px;font-size:12px;border-radius:5px;text-align:center;">
+        <input type="text" class="form-control p-delivery" placeholder="货期" value="${App.escapeHtml(data ? (data.delivery || '') : '')}" style="flex:1;min-width:70px;padding:5px 7px;font-size:12px;border-radius:5px;">
+        <button type="button" onclick="removeProductRow('${rowId}')" style="padding:0 6px;background:none;border:none;cursor:pointer;color:#e24b4a;font-size:17px;line-height:1;" title="删除此行">×</button>
+      `;
+      container.appendChild(row);
+      row.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', updateProductSummary);
+      });
+      updateProductSummary();
+      return rowId;
+    }
+
+    function removeProductRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (row && document.querySelectorAll('#productRows > div').length > 1) {
+        row.remove();
+        renumberProductRows();
+        updateProductSummary();
+      } else {
+        showToast('至少保留一行产品', 'error');
+      }
+    }
+
+    function renumberProductRows() {
+      const rows = document.querySelectorAll('#productRows > div');
+      rows.forEach((row, index) => {
+        row.querySelector('span').textContent = '#' + (index + 1);
+      });
+      productRowCount = rows.length;
+    }
+
+    function updateProductSummary() {
+      let totalQty = 0, itemCount = 0;
+      document.querySelectorAll('#productRows .p-qty').forEach(input => {
+        const val = parseInt(input.value);
+        if (!isNaN(val) && val > 0) { totalQty += val; itemCount++; }
+      });
+      const el = document.getElementById('productSummary');
+      el.textContent = itemCount > 0 ? `共 ${itemCount} 个产品 · 总数量 ${totalQty}` : '';
+    }
+
+    function pasteFromExcel() {
+      navigator.clipboard.readText().then(text => {
+        if (!text || !text.trim()) { showToast('剪贴板为空', 'error'); return; }
+        const lines = text.trim().split(/\r?\n/).filter(line => line.trim());
+        if (lines.length === 0) { showToast('未识别到有效内容', 'error'); return; }
+        document.getElementById('productRows').innerHTML = '';
+        productRowCount = 0;
+        lines.forEach(line => {
+          const cols = line.split('\t');
+          addProductRow({ brand: cols[0]?.trim() || '', model: cols[1]?.trim() || '', qty: cols[2]?.trim() || '', delivery: cols[3]?.trim() || '' });
+        });
+        showToast('✅ 已导入 ' + lines.length + ' 行产品数据', 'success');
+      }).catch(() => {
+        showToast('浏览器不支持自动读取剪贴板，请手动添加', 'error');
+      });
+    }
+
+    function collectProducts() {
+      const products = [];
+      let hasValidData = false;
+      document.querySelectorAll('#productRows > div').forEach(row => {
+        const brand = row.querySelector('.p-brand').value.trim();
+        const model = row.querySelector('.p-model').value.trim();
+        const qtyVal = row.querySelector('.p-qty').value.trim();
+        const delivery = row.querySelector('.p-delivery').value.trim();
+        const qty = qtyVal ? parseInt(qtyVal) : 0;
+        if (model || brand) { products.push({ brand, model, qty: Math.max(0, qty), delivery }); if (model) hasValidData = true; }
+      });
+      return { products, hasValidData };
+    }
+
+    // ===== Dashboard =====
+    let salesSortDesc = true;
+    let orderDateSortAsc = false;
+
+    function toggleSalesSort() {
+      salesSortDesc = !salesSortDesc;
+      document.getElementById('salesSortIcon').textContent = salesSortDesc ? '↓ 降序' : '↑ 升序';
+      loadDashboard();
+    }
+
+    function toggleOrderDateSort() {
+      orderDateSortAsc = !orderDateSortAsc;
+      const icon = document.getElementById('orderDateSortIcon');
+      if (icon) icon.textContent = orderDateSortAsc ? '↑ 升序' : '↓ 降序';
+      loadOrders();
+    }
+
+    async function loadDashboard() {
+      const stats = await API.getOrderStats();
+      document.querySelector('.stat-total .stat-number').textContent = stats.total;
+      document.querySelector('.stat-pending .stat-number').textContent = stats.by_status['调货中'] || 0;
+      document.querySelector('.stat-transit .stat-number').textContent = stats.by_status['路途中'] || 0;
+      document.querySelector('.stat-arrived .stat-number').textContent = stats.by_status['已到货'] || 0;
+      document.querySelector('.stat-completed .stat-number').textContent = stats.by_status['已完结'] || 0;
+      document.querySelector('.stat-users .stat-number').textContent = stats.by_sales.length;
+
+      const container = document.getElementById('salesStatsContainer');
+      if (!stats.by_sales || stats.by_sales.length === 0) {
+        App.showEmpty(container, '暂无业务员数据，请先添加业务员');
+        return;
+      }
+      let html = `<div class="table-wrapper"><table><thead><tr><th>业务员姓名</th><th style="cursor:pointer;user-select:none;" onclick="toggleSalesSort()">订单数量 <span id="salesSortIcon" style="margin-left:4px;font-size:11px;color:#999;">↓ 降序</span></th></tr></thead><tbody>`;
+      const sorted = [...stats.by_sales].sort((a, b) => salesSortDesc ? b.order_count - a.order_count : a.order_count - b.order_count);
+      sorted.forEach(s => {
+        html += `<tr><td><strong>${App.escapeHtml(s.name)}</strong></td><td><span class="status-badge" style="background:#667eea;color:white;padding:2px 10px;border-radius:10px;">${s.order_count}</span></td></tr>`;
+      });
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    // ===== 订单相关 =====
+    async function loadSalespeopleSelect() {
+      const { data } = await API.getSalespeople();
+      const select = document.getElementById('salespersonName');
+      const filterSelect = document.getElementById('filterSalesperson');
+      let options = '<option value=""></option>';
+      let filterOptions = '<option value="">全部业务员</option>';
+      if (data && data.length > 0) {
+        data.forEach(sp => {
+          options += `<option value="${App.escapeHtml(sp.name)}">${App.escapeHtml(sp.name)}</option>`;
+          filterOptions += `<option value="${App.escapeHtml(sp.name)}">${App.escapeHtml(sp.name)}</option>`;
+        });
+      }
+      select.innerHTML = options;
+      filterSelect.innerHTML = filterOptions;
+    }
+
+    async function loadOrders() {
+      const container = document.getElementById('ordersContainer');
+      App.showLoading(container);
+
+      const statusFilter = document.getElementById('filterStatus').value;
+      const spFilter = document.getElementById('filterSalesperson').value;
+
+      try {
+        let query = DB.collection(COL.ORDERS).orderBy('created_at', 'desc').limit(1000);
+
+        if (statusFilter === '__empty__') {
+          // CloudBase: 筛选 order_status 为 null 或不存在的记录
+          const res = await query.get();
+          let data = (res.data || []).filter(o => !o.order_status);
+          if (spFilter) data = data.filter(o => o.salesperson_name === spFilter);
+          renderOrders(data);
+          return;
+        } else if (statusFilter) {
+          query = query.where({ order_status: statusFilter });
+        }
+        if (spFilter) {
+          query = query.where({ salesperson_name: spFilter });
+        }
+
+        const res = await query.get();
+        renderOrders(res.data || []);
+      } catch (e) {
+        App.showError(container, '加载订单失败: ' + e.message);
+      }
+    }
+
+    function renderOrders(orders) {
+      const container = document.getElementById('ordersContainer');
+      if (!orders || orders.length === 0) { App.showEmpty(container, '暂无订单数据'); return; }
+
+      orders.sort((a, b) => {
+        const da = a.order_date || '', db = b.order_date || '';
+        return orderDateSortAsc ? da.localeCompare(db) : db.localeCompare(da);
+      });
+
+      let html = `<div class="table-wrapper" style="overflow-x:auto;"><table><thead><tr>
+        <th>到款单号</th><th style="cursor:pointer;user-select:none;white-space:nowrap;" onclick="toggleOrderDateSort()">单据日期 <span id="orderDateSortIcon" style="font-size:11px;color:#999;">${orderDateSortAsc ? '↑ 升序' : '↓ 降序'}</span></th><th style="min-width:200px;">产品明细</th>
+        <th>总数量</th><th>状态</th><th>业务员</th><th>预计发货时间</th>
+        <th>📸拍照</th><th>📦带来</th><th>📅验货</th><th>📅收回</th>
+        <th>创建时间</th><th>操作</th>
+      </tr></thead><tbody>`;
+
+      orders.forEach(order => {
+        const productsHtml = renderProductDetail(order.product_model);
+        const statusClass = { '调货中': 'status-pending', '路途中': 'status-transit', '已到货': 'status-arrived', '已完结': 'status-completed' }[order.order_status] || '';
+        const oid = order._id || order.id;
+        html += `<tr>
+          <td><strong>${App.escapeHtml(order.invoice_no)}</strong></td>
+          <td>${order.order_date || '-'}</td>
+          <td style="min-width:200px;">${productsHtml}</td>
+          <td><strong>${order.quantity || '-'}</strong></td>
+          <td><span class="status-badge ${statusClass}">${order.order_status || '待填写'}</span></td>
+          <td>${App.escapeHtml(order.salesperson_name || '-')}</td>
+          <td>${order.shipping_date || '-'}</td>
+          <td style="text-align:center;">${order.photo_request ? '✅' : '-'}</td><td style="text-align:center;">${order.bring_goods ? '✅' : '-'}</td><td style="white-space:nowrap;">${order.inspection_date || '-'}</td><td style="white-space:nowrap;">${order.return_date || '-'}</td>
+          <td style="white-space:nowrap;font-size:12px;color:#999;">${App.formatDate(order.created_at)}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="deleteOrder('${oid}')">删除</button></td>
+        </tr>`;
+      });
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    // 新增订单
+    document.getElementById('addOrderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const invoiceNo = document.getElementById('invoiceNo').value.trim();
+      const orderDate = document.getElementById('orderDate').value;
+      const salespersonName = document.getElementById('salespersonName').value;
+      const { products, hasValidData } = collectProducts();
+
+      if (!invoiceNo || !hasValidData || !salespersonName) { showToast('请填写所有必填字段', 'error'); return; }
+      if (products.length === 0) { showToast('请至少添加一行有效产品', 'error'); return; }
+
+      const totalQty = products.reduce((sum, p) => sum + (p.qty || 0), 0);
+      const existing = await API.getOrderByInvoice(invoiceNo);
+      if (existing.data) { showToast('该到款单号已存在', 'error'); return; }
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      setBtnLoading(btn, true, '添加中...');
+
+      const { error } = await API.createOrder({
+        invoice_no: invoiceNo, order_date: orderDate || null,
+        product_model: JSON.stringify(products), quantity: totalQty,
+        delivery_date: null, salesperson_name: salespersonName
+      });
+
+      setBtnLoading(btn, false, '添加订单');
+      if (error) { showToast('添加失败: ' + error.message, 'error'); return; }
+      showToast('✅ 订单添加成功！', 'success');
+      e.target.reset();
+      document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('productRows').innerHTML = '';
+      productRowCount = 0;
+      addProductRow();
+      await loadOrders();
+    });
+
+    // ===== 业务员管理 =====
+    async function loadSalespeopleList() {
+      const container = document.getElementById('spContainer');
+      App.showLoading(container);
+      const { data, error } = await API.getAllSalespeople(true);
+      if (error) { App.showError(container, '加载失败: ' + error.message); return; }
+      if (!data || data.length === 0) { App.showEmpty(container, '暂无业务员'); return; }
+      renderSalespeople(data);
+    }
+
+    function renderSalespeople(list) {
+      const container = document.getElementById('spContainer');
+      let html = `<div class="table-wrapper"><table><thead><tr><th>业务员姓名</th><th>识别码</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+      list.forEach(sp => {
+        const isActive = sp.is_active !== false;
+        const sid = sp._id || sp.id;
+        html += `<tr data-id="${sid}">
+          <td><input type="text" class="inline-edit" id="spname-${sid}" value="${App.escapeHtml(sp.name)}" style="width:120px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;" ${!isActive ? 'disabled style="background:#f5f5f5;color:#999;"' : ''}></td>
+          <td><input type="text" class="inline-edit" id="spcode-${sid}" value="${App.escapeHtml(sp.access_code || '')}" style="width:100px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;"></td>
+          <td><span class="status-badge" style="background:${isActive ? '#e8f5e9' : '#fff3e0'};color:${isActive ? '#2e7d32' : '#e65100'};padding:2px 10px;border-radius:10px;font-size:12px;">${isActive ? '✅ 正常' : '⛔ 已停用'}</span></td>
+          <td style="font-size:12px;color:#999;">${App.formatDate(sp.created_at)}</td>
+          <td>${isActive
+            ? `<button class="btn btn-sm btn-primary" style="font-size:11px;padding:4px 10px;" onclick="saveSpName('${sid}')">保存改名</button>
+               <button class="btn btn-sm btn-danger" style="font-size:11px;padding:4px 10px;" onclick="removeSp('${sid}')">停用</button>`
+            : `<button class="btn btn-sm btn-success" style="font-size:11px;padding:4px 10px;" onclick="restoreSp('${sid}')">✅ 恢复使用</button>`
+          }</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    document.getElementById('addSalespersonForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('newSpName').value.trim();
+      const code = document.getElementById('newSpCode').value.trim();
+      if (!name) { showToast('请输入业务员姓名', 'error'); return; }
+      const btn = e.target.querySelector('button[type="submit"]');
+      setBtnLoading(btn, true, '添加中...');
+      const spData = { name, is_active: true };
+      if (code) spData.access_code = code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const { data, error } = await API.addSalesperson(spData);
+      setBtnLoading(btn, false, '添加业务员');
+      if (error) { showToast('添加失败: ' + error.message, 'error'); return; }
+      showToast('✅ 业务员「' + name + '」已添加！', 'success');
+      e.target.reset();
+      await loadSalespeopleList();
+    });
+
+    async function saveSpName(id) {
+      const input = document.getElementById('spname-' + id);
+      const newName = input.value.trim();
+      if (!newName) { showToast('姓名不能为空', 'error'); return; }
+      const codeInput = document.getElementById('spcode-' + id);
+      const newCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+      const updates = { name: newName };
+      if (newCode) updates.access_code = newCode;
+      const { error } = await API.updateSalesperson(id, updates);
+      if (error) { showToast('保存失败: ' + error.message, 'error'); return; }
+      showToast('✅ 姓名已更新', 'success');
+      await loadSalespeopleList();
+    }
+
+    async function removeSp(id) {
+      if (!confirm('确定要停用此业务员吗？')) return;
+      const { error } = await API.deleteSalesperson(id);
+      if (error) { showToast('操作失败: ' + error.message, 'error'); return; }
+      showToast('✅ 已停用', 'success');
+      await loadSalespeopleList();
+    }
+
+    async function restoreSp(id) {
+      const { error } = await API.updateSalesperson(id, { is_active: true });
+      if (error) { showToast('恢复失败: ' + error.message, 'error'); return; }
+      showToast('✅ 已恢复使用！', 'success');
+      await loadSalespeopleList();
+    }
+
+    // ===== 产品明细渲染 =====
+    function renderProductDetail(productModel) {
+      if (!productModel) return '<span style="color:#ccc;">-</span>';
+      let products = null;
+      if (typeof productModel === 'string' && productModel.startsWith('[')) {
+        try { products = JSON.parse(productModel); } catch(e) {}
+      }
+      if (products && Array.isArray(products) && products.length > 0) {
+        let html = '<div style="font-size:11px;">';
+        products.forEach((p, i) => {
+          const brand = p.brand ? `<span style="background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-right:3px;">${App.escapeHtml(p.brand)}</span>` : '';
+          const model = `<strong>${App.escapeHtml(p.model || '-')}</strong>`;
+          const qty = p.qty ? `<span style="color:#e67e22;">×${p.qty}</span>` : '';
+          const delivery = p.delivery ? `<span style="color:#888;font-size:10px;">${App.escapeHtml(p.delivery)}</span>` : '';
+          html += `<div style="padding:2px 0;${i > 0 ? 'border-top:1px dotted #eee;' : ''}">${brand}${model} ${qty} ${delivery}</div>`;
+        });
+        html += '</div>';
+        return html;
+      }
+      return `<span style="font-size:12px;color:#555;word-break:break-all;">${App.escapeHtml(productModel)}</span>`;
+    }
+
+    async function deleteOrder(orderId) {
+      if (!confirm('确定要删除此订单吗？此操作不可恢复！')) return;
+      const { error } = await API.deleteOrder(orderId);
+      if (error) { showToast('删除失败: ' + error.message, 'error'); return; }
+      showToast('订单已删除', 'success');
+      await loadOrders();
+    }
+
+    function setBtnLoading(btn, loading, text) {
+      btn.disabled = loading;
+      btn.textContent = text;
+    }
+
+    // ===== 导出CSV =====
+    async function exportOrdersCSV() {
+      let dateFrom = prompt('导出订单：请输入起始日期（YYYY-MM-DD），留空导出全部', '');
+      if (dateFrom === null) return;
+      let dateTo = '';
+      if (dateFrom) {
+        dateTo = prompt('导出订单：请输入截止日期（YYYY-MM-DD）', '');
+        if (dateTo === null) return;
+      }
+      showToast('正在导出...', 'info');
+
+      try {
+        let res = await DB.collection(COL.ORDERS).orderBy('created_at', 'desc').limit(5000).get();
+        let data = res.data || [];
+        if (dateFrom) data = data.filter(o => o.order_date >= dateFrom);
+        if (dateTo) data = data.filter(o => o.order_date <= dateTo);
+        if (data.length === 0) { showToast('没有匹配的订单', 'error'); return; }
+
+        const headers = ['到款单号','单据日期','产品明细','总数量','状态','业务员','预计发货时间','进度回复','需拍照','需带来','验货日期','收回日期','创建时间'];
+        const rows = data.map(o => [
+          o.invoice_no || '', o.order_date || '',
+          (typeof o.product_model === 'string' && o.product_model.startsWith('[') ? JSON.parse(o.product_model).map(p => (p.brand||'')+' '+p.model+' ×'+p.qty).join('; ') : (o.product_model || '')),
+          o.quantity || 0, o.order_status || '', o.salesperson_name || '', o.shipping_date || '', o.warehouse_notes || '',
+          o.photo_request ? '是' : '否', o.bring_goods ? '是' : '否', o.inspection_date || '', o.return_date || '',
+          o.created_at ? new Date(o.created_at).toLocaleString('zh-CN') : ''
+        ]);
+
+        const BOM = '\uFEFF';
+        const csv = BOM + headers.join(',') + '\n' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = '订单导出_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+        URL.revokeObjectURL(url);
+        showToast('✅ 已导出 ' + data.length + ' 条订单', 'success');
+      } catch(e) {
+        showToast('导出失败: ' + e.message, 'error');
+      }
+    }
+
+    // ===== 清理旧文件 =====
+    async function cleanOldFiles() {
+      const days = prompt('清理多少天前的文件？（例如：7、14、30）', '7');
+      if (!days || isNaN(days) || days < 1) return;
+      if (!confirm('确定删除 ' + days + ' 天前的所有文件吗？此操作不可恢复！')) return;
+
+      showToast('正在清理...', 'info');
+      const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+      let deleted = 0;
+
+      try {
+        const res = await DB.collection(COL.ORDERS).limit(5000).get();
+        const orders = res.data || [];
+        const toDeleteIds = [];
+
+        for (const order of orders) {
+          const files = Array.isArray(order.file_ids) ? order.file_ids : [];
+          if (!files.length) continue;
+          const keep = files.filter(f => !f.uploaded_at || f.uploaded_at >= cutoff);
+          const del = files.filter(f => f.uploaded_at && f.uploaded_at < cutoff);
+          if (!del.length) continue;
+
+          for (const f of del) {
+            if (String(f.id).startsWith('cloud://')) {
+              toDeleteIds.push(f.id);
+            }
+          }
+
+          const oid = order._id || order.id;
+          await DB.collection(COL.ORDERS).doc(oid).update({
+            file_ids: keep.length ? keep : [],
+            updated_at: new Date().toISOString()
+          });
+          deleted += del.length;
+        }
+
+        // 批量删除 CloudBase 文件
+        if (toDeleteIds.length > 0) {
+          for (let i = 0; i < toDeleteIds.length; i += 50) {
+            const batch = toDeleteIds.slice(i, i + 50);
+            try { await TCB.deleteFile({ fileList: batch }); } catch(e) {}
+          }
+        }
+
+        showToast('✅ 已清理 ' + deleted + ' 个文件', 'success');
+      } catch(e) {
+        showToast('清理失败: ' + e.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>
