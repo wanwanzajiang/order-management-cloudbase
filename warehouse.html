@@ -9,7 +9,7 @@
  <td style="text-align:center;">${e.photo_request?"📸":"-"}</td><td style="max-width:120px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td>
  <td>${!0===e.bring_goods||"true"===e.bring_goods?"✅是":!1===e.bring_goods||"false"===e.bring_goods?"❌否":"-"}</td>
  <td>${e.inspection_date||"-"}</td>
- <td>${e.return_date||"-"}</td><td style="white-space:nowrap;font-size:11px;">${e.delivered_at?"\u2705"+App.formatDate(e.delivered_at):'<button onclick="markDelivered(\''+o+'\')" style="font-size:10px;padding:2px 5px;background:#5DCAA5;color:#fff;border:none;border-radius:3px;cursor:pointer">待送</button>'} ${e.returned_at?"\u2705"+App.formatDate(e.returned_at):e.delivered_at&&e.return_date?'<button onclick="markReturned(\''+o+'\')" style="font-size:10px;padding:2px 5px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer">待收</button>':''}</td>
+ <td>${e.return_date||"-"}</td>${e.delivered_at?"✅ 已送":'<button onclick="markDelivered(\''+o+'\')\" style="font-size:10px;padding:2px 5px;background:#5DCAA5;color:#fff;border:none;border-radius:3px;cursor:pointer">待送</button>'} ${e.returned_at?"✅ 已收":e.delivered_at&&e.return_date?'<button onclick="markReturned(\''+o+'\')\" style="font-size:10px;padding:2px 5px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer">待收</button>':''}</td>
  <td style="display:flex;gap:4px;flex-wrap:wrap;">
  ${r}
  <select class="form-control status-select" onchange="updateStatus('${o}', this.value)" style="width:80px;">
