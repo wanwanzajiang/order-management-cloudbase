@@ -17,7 +17,7 @@
  ${CONFIG.ORDER_STATUSES.map(t=>`<option value="${t}" ${t===e.order_status?"selected":""}>${t}</option>`).join("")}
  </select>
  </td>
- </tr>`}function renderOrders(t){var e=document.getElementById("ordersContainer");t.sort((t,e)=>{t=t.order_date||"",e=e.order_date||"";return whDateSortAsc?t.localeCompare(e):e.localeCompare(t)});let r={};t.forEach(t=>{var e=t.order_status;r[e]||(r[e]=[]),r[e].push(t)});var o={"调货中":"📦","路途中":"🚚","已到货":"✅","已完结":"🏁"};let a="";var n,t=r.null||[];0<t.length&&(a+=`<div class="card" style="margin-bottom:16px;border-left:4px solid #e07a5f;padding:16px;">
+ </tr>`}function renderOrders(t){var e=document.getElementById("ordersContainer");t.sort((t,e)=>{t=t.order_date||"",e=e.order_date||"";return whDateSortAsc?t.localeCompare(e):e.localeCompare(t)});let r={};t.forEach(t=>{var e=t.order_status;r[e]||(r[e]=[]),r[e].push(t)});var o={"调货中":"📦","路途中":"🚚","已到货":"✅","已完结":"🏁"};let a="";var n,t=r[""]||[];0<t.length&&(a+=`<div class="card" style="margin-bottom:16px;border-left:4px solid #e07a5f;padding:16px;">
  <h4 style="margin:0 0 12px 0;">📋 待处理 (${t.length})</h4>
  <div class="table-wrapper" style="overflow-x:auto;">
  <table><thead><tr>
