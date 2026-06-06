@@ -9,7 +9,7 @@
  <td style="text-align:center;">${e.photo_request?"📸":"-"}</td><td style="max-width:120px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td>
  <td>${!0===e.bring_goods||"true"===e.bring_goods?"✅是":!1===e.bring_goods||"false"===e.bring_goods?"❌否":"-"}</td>
  <td>${e.inspection_date||"-"}</td>
- <td>${e.return_date||"-"}</td>${e.delivered_at?"✅ 已送":'<button onclick="markDelivered(\''+o+'\')\" style="font-size:10px;padding:2px 5px;background:#5DCAA5;color:#fff;border:none;border-radius:3px;cursor:pointer">待送</button>'} ${e.returned_at?"✅ 已收":e.delivered_at&&e.return_date?'<button onclick="markReturned(\''+o+'\')\" style="font-size:10px;padding:2px 5px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer">待收</button>':''}</td>
+ <td>${e.delivered_at?"✅ 已送":'<button onclick="markDelivered(\''+o+'\')\" style="font-size:10px;padding:2px 5px;background:#5DCAA5;color:#fff;border:none;border-radius:3px;cursor:pointer">待送</button>'}</td><td>${e.returned_at?"✅ 已收":e.delivered_at&&e.return_date?'<button onclick="markReturned(\''+o+'\')\" style="font-size:10px;padding:2px 5px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer">待收</button>':''}</td>
  <td style="display:flex;gap:4px;flex-wrap:wrap;">
  ${r}
  <select class="form-control status-select" onchange="updateStatus('${o}', this.value)" style="width:80px;">
@@ -23,7 +23,7 @@
  <table><thead><tr>
  <th>到款单号</th><th>单据日期</th><th>产品明细</th><th>总数量</th><th>业务员</th>
  <th style="color:#e07a5f;">📅 预计发货时间</th>
- <th>进度回复</th><th>拍照</th><th>拍照要求</th><th>是否带来</th><th>验货时间</th><th>收回时间</th><th>取送操作</th><th>操作</th>
+ <th>进度回复</th><th>拍照</th><th>拍照要求</th><th>是否带来</th><th>验货时间</th><th>收回时间</th><th>送货</th><th>收回</th><th>操作</th>
  </tr></thead><tbody>`,t.forEach(t=>{a+=renderOrderRow(t)}),a+="</tbody></table></div></div>");for(n of CONFIG.ORDER_STATUSES)r[n]&&0!==r[n].length&&(a+=`<div class="card" style="margin-bottom:16px;border-left:4px solid ${"调货中"===n?"#e67e22":"路途中"===n?"#3498db":"已到货"===n?"#27ae60":"#95a5a6"};padding:16px;">
  <h4 style="margin:0 0 12px 0;">${o[n]} ${n} (${r[n].length})</h4>
  <div class="table-wrapper" style="overflow-x:auto;">
