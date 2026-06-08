@@ -34,43 +34,26 @@
  <th>进度回复</th><th>拍照</th><th>拍照要求</th><th>是否带来</th><th>验货时间</th><th>收回时间</th><th style="min-width:70px;">操作</th>
  </tr></thead><tbody>`,r[n].forEach(t=>{a+=renderOrderRow(t)}),a+="</tbody></table></div></div>");e.innerHTML=a||'<p style="text-align:center;color:#999;padding:30px;">暂无匹配的订单</p>'}function renderWarehouseProductDetail(t){if(!t)return'<span style="color:#ccc;">-</span>';let e=null;if("string"==typeof t&&t.startsWith("["))try{e=JSON.parse(t)}catch(t){}if(e&&Array.isArray(e)&&0<e.length){let n="<div>";return e.forEach((t,e)=>{var r=t.brand?`<span style="background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-right:3px;font-size:10px;">${App.escapeHtml(t.brand)}</span>`:"",o=`<strong>${App.escapeHtml(t.model||"-")}</strong>`,a=t.qty?`<span style="color:#e67e22;">×${t.qty}</span>`:"",t=t.delivery?`<span style="color:#888;font-size:10px;margin-left:4px;">${t.delivery}</span>`:"";n+=`<div style="padding:2px 0;${0<e?"border-top:1px dotted #eee":""}">${r}${o} ${a}${t}</div>`}),n+="</div>"}return`<span style="font-size:12px;color:#555;word-break:break-all;">${App.escapeHtml(t)}</span>`}async function updateStatus(t,e){if("已到货"===e){var r=document.querySelector(`tr[data-id="${t}"]`)?.querySelector(".ship-date");if(r&&!r.value)return showToast("⚠️ 请先填写预计发货时间","error"),r.focus(),r.style.borderColor="#e24b4a",void loadOrders()}showToast("更新中...","");r=(await API.updateOrder(t,{order_status:e})).error;r?showToast("更新失败: "+r.message,"error"):(showToast("✅ 状态 → "+e,"success"),setTimeout(()=>loadOrders(),500))}async function updateShipping(t,e){t=(await API.updateOrder(t,{shipping_date:e||null})).error;t&&showToast("保存失败: "+t.message,"error")}async function updateWarehouseNotes(t,e){t=(await API.updateOrder(t,{warehouse_notes:e})).error;t&&showToast("备注保存失败: "+t.message,"error")};(()=>{var _c=FileOps.close;FileOps.close=function(){_c(),loadOrders()}})();async function markDelivered(e){if(!confirm("确认已送货？"))return;var r=await API.updateOrder(e,{delivered_at:new Date().toISOString()});r.error?showToast("操作失败: "+r.error.message,"error"):(showToast("已标记送货","success"),loadOrders())};async function markReturned(e){if(!confirm("确认已收回？"))return;var r=await API.updateOrder(e,{returned_at:new Date().toISOString()});r.error?showToast("操作失败: "+r.error.message,"error"):(showToast("已标记收回","success"),loadOrders())}</script>
 <script>
-;(function(){
-  window.undoDelivered=async function(id){
-    if(!confirm("确定撤销已送货？"))return;
-    var r=await API.updateOrder(id,{delivered_at:null});
-    if(r.error){showToast("撤销失败: "+r.error.message,"error");return;}
-    showToast("已撤销送货","success");loadOrders();
+window.undoDelivered=async function(id){
+  if(!confirm("确定撤销已送货？"))return;
+  var r=await API.updateOrder(id,{delivered_at:null});
+  if(r.error){showToast("撤销失败: "+r.error.message,"error");return;}
+  showToast("已撤销送货","success");loadOrders();
+};
+window.undoReturned=async function(id){
+  if(!confirm("确定撤销已收回？"))return;
+  var r=await API.updateOrder(id,{returned_at:null});
+  if(r.error){showToast("撤销失败: "+r.error.message,"error");return;}
+  showToast("已撤销收回","success");loadOrders();
+};
+(function(){
+  var _ror=renderOrderRow;
+  renderOrderRow=function(e){
+    var h=_ror(e),id=e._id||e.id;
+    h=h.replace(/✓ 已送/g,"✓ 已送 <a href=\"javascript:void(0)\" onclick=\"undoDelivered(\'"+id+"\');return false\" style=\"font-size:10px;color:#e07a5f;text-decoration:none\" title=\"撤销\">↩️</a>");
+    h=h.replace(/✓ 已收/g,"✓ 已收 <a href=\"javascript:void(0)\" onclick=\"undoReturned(\'"+id+"\');return false\" style=\"font-size:10px;color:#e07a5f;text-decoration:none\" title=\"撤销\">↩️</a>");
+    return h;
   };
-  window.undoReturned=async function(id){
-    if(!confirm("确定撤销已收回？"))return;
-    var r=await API.updateOrder(id,{returned_at:null});
-    if(r.error){showToast("撤销失败: "+r.error.message,"error");return;}
-    showToast("已撤销收回","success");loadOrders();
-  };
-  function injectUndo(){
-    document.querySelectorAll("table tbody tr").forEach(function(tr){
-      if(tr.dataset.undo)return;
-      tr.dataset.undo="1";
-      var tds=tr.querySelectorAll("td");
-      for(var i=0;i<tds.length;i++){
-        var h=tds[i].innerHTML||"";
-        var m=h.match(/onclick="markDelivered\('([^']+)'\)/)||h.match(/onclick="markReturned\('([^']+)'\)/);
-        var id=m?m[1]:"";
-        if(!id)continue;
-        if(h.indexOf("\u2713 \u5df2\u9001")>=0&&h.indexOf("undoDelivered")<0)
-          tds[i].innerHTML=h.replace("\u2713 \u5df2\u9001",'\u2713 \u5df2\u9001 <a href="javascript:void(0)" onclick="undoDelivered(\''+id+'\')" style="font-size:10px;color:#e07a5f;text-decoration:none;" title="\u64a4\u9500\u9001\u8d27">\u21a9\ufe0f</a>');
-        if(h.indexOf("\u2713 \u5df2\u6536")>=0&&h.indexOf("undoReturned")<0)
-          tds[i].innerHTML=h.replace("\u2713 \u5df2\u6536",'\u2713 \u5df2\u6536 <a href="javascript:void(0)" onclick="undoReturned(\''+id+'\')" style="font-size:10px;color:#e07a5f;text-decoration:none;" title="\u64a4\u9500\u6536\u56de">\u21a9\ufe0f</a>');
-      }
-    });
-  }
-  injectUndo();
-  if(typeof loadOrders==="function"){
-    var _lo=loadOrders;
-    loadOrders=function(){return _lo.apply(this,arguments).then(function(){injectUndo()})};
-  }
-  new MutationObserver(function(){injectUndo()}).observe(document.getElementById("ordersContainer")||document.body,{childList:true,subtree:true});
-  setTimeout(injectUndo,800);
 })();
 </script>
 </body></html>
