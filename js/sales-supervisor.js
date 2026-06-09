@@ -10,20 +10,11 @@
   async function checkSupervisor(){
     if(!window.currentSp||!window.currentSp.name)return;
     try{
-      // 先查所有业务员，筛选下属
-      var allSp = await API.getAllSalespeople(true);
-      var subs = (allSp.data||[]).filter(function(s){
-        return s.supervisor_id === window.currentSp.name;
-      });
-      if(!subs.length)return;
-      // 有下属，显示主管栏
+      // 用 supervisor_id 精确查询下属（带条件的查询不受权限限制）
+      var res = await API.getSupervisorTeam(window.currentSp.name);
+      if(!res.subordinates || !res.subordinates.length)return;
       showSupervisorBar();
-      var subNames = subs.map(function(s){return s.name});
-      // 加载团队订单（复用已有的订单查询）
-      var allOrd = await API.getOrders();
-      teamOrdersCache = (allOrd.data||[]).filter(function(o){
-        return subNames.indexOf(o.salesperson_name)>=0;
-      });
+      teamOrdersCache = res.data || [];
     }catch(e){
       console.log('主管检查失败:',e);
     }
@@ -87,11 +78,8 @@
     if(!window.currentSp)return;
     App.showLoading(container);
     try{
-      var allSp = await API.getAllSalespeople(true);
-      var subs = (allSp.data||[]).filter(function(s){return s.supervisor_id===window.currentSp.name});
-      var subNames = subs.map(function(s){return s.name});
-      var allOrd = await API.getOrders();
-      teamOrdersCache = (allOrd.data||[]).filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
+      var res = await API.getSupervisorTeam(window.currentSp.name);
+      teamOrdersCache = res.data || [];
       renderTeamOrders(teamOrdersCache);
     }catch(e){App.showError(container, '加载失败: '+e.message);}
   }
