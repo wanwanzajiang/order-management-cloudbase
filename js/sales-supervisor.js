@@ -11,11 +11,9 @@
     if(!currentSp||!currentSp.name)return;
     if(checked)return;
     checked = true;
-    console.log('SV-CHECK name='+currentSp.name);
     try{
       var res = await API.getSupervisorTeam(currentSp.name);
-      console.log('SV-RESULT err='+!!res.error+' subs='+(res.subordinates||[]).length+' data='+(res.data||[]).length);
-      if(res.error){console.error('SV-ERR',res.error);return;}
+      if(res.error)return;
       if(!res.subordinates || !res.subordinates.length)return;
       showSupervisorBar();
       teamOrdersCache = res.data || [];
@@ -68,12 +66,10 @@
     c.innerHTML=h;
   }
 
-  // 轮询检测 currentSp 变化
-  var lastSp = null;
   console.log('SV-POLL start');
+  var lastSp = null;
   setInterval(function(){
     if(currentSp && currentSp.name && (!lastSp || lastSp.name !== currentSp.name)){
-      console.log('SV-POLL detect sp='+currentSp.name);
       lastSp = currentSp;
       checked = false;
       checkSupervisor();
