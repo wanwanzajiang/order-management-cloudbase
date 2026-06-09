@@ -27,6 +27,7 @@ exports.main = async (event, context) => {
       case 'reset-password': return await resetPassword(user_id, new_password);
       case 'query-salespeople': return await querySalespeople(filter);
       case 'query-orders': return await queryOrders(filter, limit);
+      case 'update-order': return await updateOrder(user_id, filter);
       default: return { success: false, error: '未知操作: ' + action };
     }
   } catch (err) {
@@ -102,6 +103,15 @@ async function queryOrders(filter, limit) {
     if (limit) query = query.limit(limit);
     const res = await query.get();
     return { success: true, data: res.data || [] };
+  } catch (err) {
+    return { success: false, error: err.message || String(err) };
+  }
+}
+
+async function updateOrder(id, updates) {
+  try {
+    await db.collection('orders').doc(id).update(updates);
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message || String(err) };
   }
