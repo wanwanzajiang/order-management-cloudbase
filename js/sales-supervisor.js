@@ -11,9 +11,11 @@
     if(!window.currentSp||!window.currentSp.name)return;
     if(checked)return;
     checked = true;
+    console.log('SV-CHECK name='+window.currentSp.name);
     try{
       var res = await API.getSupervisorTeam(window.currentSp.name);
-      if(res.error)return;
+      console.log('SV-RESULT err='+!!res.error+' subs='+(res.subordinates||[]).length+' data='+(res.data||[]).length);
+      if(res.error){console.error('SV-ERR',res.error);return;}
       if(!res.subordinates || !res.subordinates.length)return;
       showSupervisorBar();
       teamOrdersCache = res.data || [];
@@ -66,10 +68,12 @@
     c.innerHTML=h;
   }
 
-  // 轮询检测 currentSp 变化（比 monkey-patch 更可靠）
+  // 轮询检测 currentSp 变化
   var lastSp = null;
+  console.log('SV-POLL start');
   setInterval(function(){
     if(window.currentSp && window.currentSp.name && (!lastSp || lastSp.name !== window.currentSp.name)){
+      console.log('SV-POLL detect sp='+window.currentSp.name);
       lastSp = window.currentSp;
       checked = false;
       checkSupervisor();
