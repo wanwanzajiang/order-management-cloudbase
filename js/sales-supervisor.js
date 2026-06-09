@@ -5,36 +5,27 @@
   var supervisorMode = false;
   var overdueOnly = false;
   var teamOrdersCache = [];
-  var authReady = false;
-
-  // 匿名登录 CloudBase（业务员用识别码登录，没有 CloudBase auth）
-  async function ensureAuth(){
-    if(authReady)return;
-    try{
-      await TCB.auth({persistence:'local'}).anonymousAuthProvider().signIn();
-      authReady = true;
-    }catch(e){
-      console.log('匿名登录失败:',e.message);
-    }
-  }
 
   // 检查当前业务员是否是主管
   async function checkSupervisor(){
     if(!window.currentSp||!window.currentSp.name)return;
     try{
-      await ensureAuth();
-      // 通过云函数查下属（绕过客户端权限限制）
-      var cfRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-salespeople',filter:{supervisor_id:window.currentSp.name}}});
-      var spData = (cfRes.result && cfRes.result.success) ? (cfRes.result.data||[]) : [];
-      var subNames = spData.map(function(s){return s.name});
-      if(!subNames.length)return; // 没有下属，不是主管
+      // 先查所有业务员，筛选下属
+      var allSp = await API.getAllSalespeople(true);
+      var subs = (allSp.data||[]).filter(function(s){
+        return s.supervisor_id === window.currentSp.name;
+      });
+      if(!subs.length)return;
+      // 有下属，显示主管栏
       showSupervisorBar();
-      // 异步加载团队订单
-      var allRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-orders',limit:1000}});
-      var allOrders = (allRes.result && allRes.result.success) ? (allRes.result.data||[]) : [];
-      teamOrdersCache = allOrders.filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
+      var subNames = subs.map(function(s){return s.name});
+      // 加载团队订单（复用已有的订单查询）
+      var allOrd = await API.getOrders();
+      teamOrdersCache = (allOrd.data||[]).filter(function(o){
+        return subNames.indexOf(o.salesperson_name)>=0;
+      });
     }catch(e){
-      console.log('检查主管失败:', e);
+      console.log('主管检查失败:',e);
     }
   }
 
@@ -45,49 +36,36 @@
 
     var bar = document.createElement('div');
     bar.id = 'svBar';
-    bar.style.cssText = 'display:none;padding:8px 12px;margin-bottom:12px;background:linear-gradient(135deg,#fef3e2,#fff8f0);border-radius:8px;border:1px solid #f0c060;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
+    bar.style.cssText = 'padding:8px 12px;margin-bottom:12px;background:linear-gradient(135deg,#fef3e2,#fff8f0);border-radius:8px;border:1px solid #f0c060;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
 
     bar.innerHTML = '<b style="font-size:13px;color:#b8860b;">👑 主管模式</b>';
 
-    // 我的订单按钮
     var btnMy = document.createElement('button');
     btnMy.textContent = '📋 我的订单';
     btnMy.className = 'btn btn-sm';
     btnMy.style.cssText = 'background:#667eea;color:#fff;border-color:#667eea;font-size:12px;padding:4px 12px;';
     btnMy.onclick = function(){
-      supervisorMode = false;
-      overdueOnly = false;
-      btnMy.style.background = '#667eea';
-      btnTeam.style.background = '#f0f0f0';
-      btnTeam.style.color = '#666';
-      btnTeam.style.borderColor = '#ddd';
-      hideOverdueBtn();
-      window.searchOrders();
+      supervisorMode = false; overdueOnly = false;
+      btnMy.style.background = '#667eea'; btnMy.style.color = '#fff';
+      btnTeam.style.background = '#f0f0f0'; btnTeam.style.color = '#666';
+      hideOverdueBtn(); window.searchOrders();
     };
     bar.appendChild(btnMy);
 
-    // 团队订单按钮
     var btnTeam = document.createElement('button');
     btnTeam.textContent = '👥 团队订单';
     btnTeam.className = 'btn btn-sm';
     btnTeam.style.cssText = 'background:#f0f0f0;color:#666;border-color:#ddd;font-size:12px;padding:4px 12px;';
     btnTeam.onclick = async function(){
-      supervisorMode = true;
-      overdueOnly = false;
-      btnMy.style.background = '#f0f0f0';
-      btnMy.style.color = '#666';
-      btnMy.style.borderColor = '#ddd';
-      btnTeam.style.background = '#667eea';
-      btnTeam.style.color = '#fff';
-      btnTeam.style.borderColor = '#667eea';
-      showOverdueBtn();
-      await loadTeamOrders();
+      supervisorMode = true; overdueOnly = false;
+      btnMy.style.background = '#f0f0f0'; btnMy.style.color = '#666';
+      btnTeam.style.background = '#667eea'; btnTeam.style.color = '#fff';
+      showOverdueBtn(); await loadTeamOrders();
     };
     bar.appendChild(btnTeam);
 
     container.parentNode.insertBefore(bar, container);
 
-    // 逾期按钮（初始隐藏）
     var btnOverdue = document.createElement('button');
     btnOverdue.id = 'btnOverdue';
     btnOverdue.textContent = '⚠️ 逾期未收回';
@@ -101,110 +79,55 @@
     bar.appendChild(btnOverdue);
   }
 
-  function showOverdueBtn(){
-    var b = document.getElementById('btnOverdue');
-    if(b) b.style.display = '';
-  }
-  function hideOverdueBtn(){
-    var b = document.getElementById('btnOverdue');
-    if(b) b.style.display = 'none';
-  }
+  function showOverdueBtn(){var b=document.getElementById('btnOverdue');if(b)b.style.display='';}
+  function hideOverdueBtn(){var b=document.getElementById('btnOverdue');if(b)b.style.display='none';}
 
-  // 加载团队订单
   async function loadTeamOrders(){
     var container = document.getElementById('resultContainer');
     if(!window.currentSp)return;
     App.showLoading(container);
     try{
-      await ensureAuth();
-      var cfRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-salespeople',filter:{supervisor_id:window.currentSp.name}}});
-      var subNames = ((cfRes.result&&cfRes.result.success)?(cfRes.result.data||[]):[]).map(function(s){return s.name});
-      var allRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-orders',limit:1000}});
-      var allOrders = (allRes.result&&allRes.result.success)?(allRes.result.data||[]):[];
-      teamOrdersCache = allOrders.filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
+      var allSp = await API.getAllSalespeople(true);
+      var subs = (allSp.data||[]).filter(function(s){return s.supervisor_id===window.currentSp.name});
+      var subNames = subs.map(function(s){return s.name});
+      var allOrd = await API.getOrders();
+      teamOrdersCache = (allOrd.data||[]).filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
       renderTeamOrders(teamOrdersCache);
-    }catch(e){
-      App.showError(container, '加载团队订单失败: '+e.message);
-    }
+    }catch(e){App.showError(container, '加载失败: '+e.message);}
   }
 
-  // 渲染团队订单
   function renderTeamOrders(orders){
     var container = document.getElementById('resultContainer');
-    // 逾期筛选
     var filtered = orders;
     if(overdueOnly){
       var now = new Date();
       filtered = orders.filter(function(o){
-        if(o.order_status !== '已到货') return false;
-        if(!o.delivered_at) return false;
-        if(o.returned_at) return false;
-        var delivered = new Date(o.delivered_at);
-        var days = (now - delivered) / 86400000;
-        return days > 5;
+        if(o.order_status!=='已到货'||!o.delivered_at||o.returned_at)return false;
+        return (now-new Date(o.delivered_at))/86400000 > 5;
       });
     }
-
-    var totalQty = filtered.reduce(function(sum,o){return sum+(o.quantity||0)},0);
-    var svCount = overdueOnly ? (' 逾期' + filtered.length + '单') : '';
-
-    var html = '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:#fff8f0;border-radius:8px;">' +
-      '<span style="font-size:15px;">👥 团队共 <strong style="color:#667eea;font-size:18px;">'+filtered.length+'</strong> 条'+svCount+'</span>' +
-      '<span style="font-size:15px;">📦 总数量：<strong style="color:#e67e22;font-size:18px;">'+totalQty+'</strong></span>' +
-      '</div>';
-
-    if(filtered.length === 0){
-      html += '<div class="card" style="text-align:center;padding:30px;color:#999;">' +
-        (overdueOnly ? '🎉 没有逾期订单' : '📭 暂无团队订单') + '</div>';
-      container.innerHTML = html;
-      return;
-    }
-
-    filtered.forEach(function(order){
-      var id = order._id || order.id;
-      var sc = {'调货中':'#e67e22','路途中':'#3498db','已到货':'#27ae60','已完结':'#95a5a6'}[order.order_status] || '#999';
-      var productsText = '';
-      try{
-        if(typeof order.product_model === 'string' && order.product_model.startsWith('[')){
-          var prods = JSON.parse(order.product_model);
-          productsText = prods.map(function(p){return (p.brand||'')+' '+p.model+' ×'+(p.qty||1)}).join(', ');
-        }else{
-          productsText = order.product_model || '';
-        }
-      }catch(e){productsText = order.product_model || '';}
-
-      html += '<div class="order-card" style="border-left-color:'+sc+';">' +
-        '<div class="oc-header">' +
-        '<div><span class="oc-invoice">'+App.escapeHtml(order.invoice_no)+'</span></div>' +
-        '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<span class="oc-status" style="background:'+sc+';">'+(order.order_status||'待填写')+'</span>' +
-        '<span class="oc-date">'+ (order.order_date||'-') +'</span>' +
-        '</div></div>' +
-        '<div style="font-size:12px;color:#555;margin:4px 0;">📦 '+App.escapeHtml(productsText)+'</div>' +
-        '<div style="font-size:12px;color:#888;margin:4px 0;">👤 <strong>'+App.escapeHtml(order.salesperson_name||'-')+'</strong> | 数量：'+(order.quantity||'-')+'</div>' +
-        '<div style="font-size:11px;color:#999;">' +
-        (order.delivered_at ? '已送：'+new Date(order.delivered_at).toLocaleDateString('zh-CN')+' ' : '') +
-        (order.returned_at ? '已收：'+new Date(order.returned_at).toLocaleDateString('zh-CN') : '') +
-        '</div></div>';
+    var totalQty = filtered.reduce(function(s,o){return s+(o.quantity||0)},0);
+    var html = '<div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;padding:12px;background:#fff8f0;border-radius:8px;">'+
+      '<span style="font-size:15px;">👥 团队共 <strong style="color:#667eea;font-size:18px;">'+filtered.length+'</strong> 条'+(overdueOnly?' 逾期'+filtered.length+'单':'')+'</span>'+
+      '<span style="font-size:15px;">📦 总数量：<strong style="color:#e67e22;font-size:18px;">'+totalQty+'</strong></span></div>';
+    if(!filtered.length){container.innerHTML=html+'<div class="card" style="text-align:center;padding:30px;color:#999;">'+(overdueOnly?'🎉 无逾期':'📭 无团队订单')+'</div>';return;}
+    filtered.forEach(function(o){
+      var sc={'调货中':'#e67e22','路途中':'#3498db','已到货':'#27ae60','已完结':'#95a5a6'}[o.order_status]||'#999';
+      var pt='';try{pt=typeof o.product_model==='string'&&o.product_model.startsWith('[')?JSON.parse(o.product_model).map(function(p){return(p.brand||'')+' '+p.model+' ×'+(p.qty||1)}).join(', '):(o.product_model||'')}catch(e){pt=o.product_model||''}
+      html+='<div class="order-card" style="border-left-color:'+sc+';">'+
+        '<div class="oc-header"><div><span class="oc-invoice">'+App.escapeHtml(o.invoice_no)+'</span></div>'+
+        '<div style="display:flex;align-items:center;gap:8px;"><span class="oc-status" style="background:'+sc+';">'+(o.order_status||'待填写')+'</span>'+
+        '<span class="oc-date">'+(o.order_date||'-')+'</span></div></div>'+
+        '<div style="font-size:12px;color:#555;margin:4px 0;">📦 '+App.escapeHtml(pt)+'</div>'+
+        '<div style="font-size:12px;color:#888;margin:4px 0;">👤 <strong>'+App.escapeHtml(o.salesperson_name||'-')+'</strong> | 数量：'+(o.quantity||'-')+'</div>'+
+        '<div style="font-size:11px;color:#999;">'+(o.delivered_at?'已送：'+new Date(o.delivered_at).toLocaleDateString('zh-CN')+' ':'')+(o.returned_at?'已收：'+new Date(o.returned_at).toLocaleDateString('zh-CN'):'')+'</div></div>';
     });
-
-    container.innerHTML = html;
+    container.innerHTML=html;
   }
 
-  // 监听 currentSp 变化
-  var _verifyCode = window.verifyCode;
-  if(_verifyCode){
-    var origVerify = _verifyCode;
-    window.verifyCode = async function(){
-      await origVerify.apply(this, arguments);
-      setTimeout(checkSupervisor, 500);
-    };
-  }
+  // 监听 verifyCode
+  var _vc = window.verifyCode;
+  if(_vc){var ov=_vc;window.verifyCode=async function(){await ov.apply(this,arguments);setTimeout(checkSupervisor,500);}}
 
-  // 初始检查（如果已登录）
-  setTimeout(function(){
-    if(window.currentSp && window.currentSp.name){
-      checkSupervisor();
-    }
-  }, 1000);
+  setTimeout(function(){if(window.currentSp&&window.currentSp.name)checkSupervisor();},1000);
 })();
