@@ -8,12 +8,12 @@
   var checked = false;
 
   async function checkSupervisor(){
-    if(!window.currentSp||!window.currentSp.name)return;
+    if(!currentSp||!currentSp.name)return;
     if(checked)return;
     checked = true;
-    console.log('SV-CHECK name='+window.currentSp.name);
+    console.log('SV-CHECK name='+currentSp.name);
     try{
-      var res = await API.getSupervisorTeam(window.currentSp.name);
+      var res = await API.getSupervisorTeam(currentSp.name);
       console.log('SV-RESULT err='+!!res.error+' subs='+(res.subordinates||[]).length+' data='+(res.data||[]).length);
       if(res.error){console.error('SV-ERR',res.error);return;}
       if(!res.subordinates || !res.subordinates.length)return;
@@ -51,9 +51,9 @@
   function hideOverdueBtn(){var b=document.getElementById('btnOverdue');if(b)b.style.display='none';}
 
   async function loadTeamOrders(){
-    var c=document.getElementById('resultContainer');if(!window.currentSp)return;
+    var c=document.getElementById('resultContainer');if(!currentSp)return;
     App.showLoading(c);
-    try{var r=await API.getSupervisorTeam(window.currentSp.name);teamOrdersCache=r.data||[];renderTeamOrders(teamOrdersCache);}
+    try{var r=await API.getSupervisorTeam(currentSp.name);teamOrdersCache=r.data||[];renderTeamOrders(teamOrdersCache);}
     catch(e){App.showError(c,'加载失败: '+e.message);}
   }
 
@@ -72,9 +72,9 @@
   var lastSp = null;
   console.log('SV-POLL start');
   setInterval(function(){
-    if(window.currentSp && window.currentSp.name && (!lastSp || lastSp.name !== window.currentSp.name)){
-      console.log('SV-POLL detect sp='+window.currentSp.name);
-      lastSp = window.currentSp;
+    if(currentSp && currentSp.name && (!lastSp || lastSp.name !== currentSp.name)){
+      console.log('SV-POLL detect sp='+currentSp.name);
+      lastSp = currentSp;
       checked = false;
       checkSupervisor();
     }
