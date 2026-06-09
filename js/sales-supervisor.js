@@ -5,30 +5,37 @@
   var supervisorMode = false;
   var overdueOnly = false;
   var teamOrdersCache = [];
+  var checked = false;
 
-  // 检查当前业务员是否是主管
   async function checkSupervisor(){
     if(!window.currentSp||!window.currentSp.name)return;
+    if(checked)return;
+    checked = true;
+    console.log('[主管] 开始检查:', window.currentSp.name);
     try{
-      // 用 supervisor_id 精确查询下属（带条件的查询不受权限限制）
       var res = await API.getSupervisorTeam(window.currentSp.name);
-      if(!res.subordinates || !res.subordinates.length)return;
+      console.log('[主管] getSupervisorTeam结果:', res);
+      if(res.error){console.error('[主管] 查询出错:', res.error);return;}
+      if(!res.subordinates || !res.subordinates.length){
+        console.log('[主管] 没有下属');
+        return;
+      }
+      console.log('[主管] 找到'+res.subordinates.length+'个下属:', res.subordinates);
       showSupervisorBar();
       teamOrdersCache = res.data || [];
     }catch(e){
-      console.log('主管检查失败:',e);
+      console.error('[主管] 异常:', e);
     }
   }
 
-  // 显示主管切换栏
   function showSupervisorBar(){
     var container = document.getElementById('resultContainer');
     if(!container || document.getElementById('svBar')) return;
 
+    console.log('[主管] 显示主管栏');
     var bar = document.createElement('div');
     bar.id = 'svBar';
     bar.style.cssText = 'padding:8px 12px;margin-bottom:12px;background:linear-gradient(135deg,#fef3e2,#fff8f0);border-radius:8px;border:1px solid #f0c060;display:flex;align-items:center;gap:10px;flex-wrap:wrap;';
-
     bar.innerHTML = '<b style="font-size:13px;color:#b8860b;">👑 主管模式</b>';
 
     var btnMy = document.createElement('button');
@@ -113,9 +120,18 @@
     container.innerHTML=html;
   }
 
-  // 监听 verifyCode
   var _vc = window.verifyCode;
-  if(_vc){var ov=_vc;window.verifyCode=async function(){await ov.apply(this,arguments);setTimeout(checkSupervisor,500);}}
+  if(_vc){
+    var ov=_vc;
+    window.verifyCode=async function(){
+      await ov.apply(this, arguments);
+      checked = false;
+      setTimeout(checkSupervisor, 500);
+    };
+  }
 
-  setTimeout(function(){if(window.currentSp&&window.currentSp.name)checkSupervisor();},1000);
+  setTimeout(function(){
+    console.log('[主管] 初始化, currentSp:', window.currentSp);
+    if(window.currentSp&&window.currentSp.name)checkSupervisor();
+  },1000);
 })();
