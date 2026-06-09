@@ -5,11 +5,24 @@
   var supervisorMode = false;
   var overdueOnly = false;
   var teamOrdersCache = [];
+  var authReady = false;
+
+  // 匿名登录 CloudBase（业务员用识别码登录，没有 CloudBase auth）
+  async function ensureAuth(){
+    if(authReady)return;
+    try{
+      await TCB.auth({persistence:'local'}).anonymousAuthProvider().signIn();
+      authReady = true;
+    }catch(e){
+      console.log('匿名登录失败:',e.message);
+    }
+  }
 
   // 检查当前业务员是否是主管
   async function checkSupervisor(){
     if(!window.currentSp||!window.currentSp.name)return;
     try{
+      await ensureAuth();
       // 通过云函数查下属（绕过客户端权限限制）
       var cfRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-salespeople',filter:{supervisor_id:window.currentSp.name}}});
       var spData = (cfRes.result && cfRes.result.success) ? (cfRes.result.data||[]) : [];
@@ -103,6 +116,7 @@
     if(!window.currentSp)return;
     App.showLoading(container);
     try{
+      await ensureAuth();
       var cfRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-salespeople',filter:{supervisor_id:window.currentSp.name}}});
       var subNames = ((cfRes.result&&cfRes.result.success)?(cfRes.result.data||[]):[]).map(function(s){return s.name});
       var allRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-orders',limit:1000}});
