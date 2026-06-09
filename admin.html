@@ -53,4 +53,50 @@ async function cleanCompletedOrders(){
   }catch(e){showToast('清理失败: '+e.message,'error');}
 }
 </script>
+<script>
+;(function(){
+  function injectSupervisor(){
+    var rows=document.querySelectorAll("#spContainer table tbody tr");
+    rows.forEach(function(tr){
+      if(tr.dataset.sv)return;
+      tr.dataset.sv="1";
+      var id=tr.getAttribute("data-id");
+      if(!id)return;
+      // 收集所有业务员名字
+      var allNames=[];
+      document.querySelectorAll("#spContainer input[id^=\"spname-\"]").forEach(function(inp){
+        var v=inp.value.trim();
+        if(v)allNames.push(v);
+      });
+      var nameEl=tr.querySelector('input[id^="spname-"]');
+      var name=nameEl?nameEl.value:"";
+      // 插入主管归属TD
+      var td=document.createElement("td");
+      td.style.cssText="font-size:11px;white-space:nowrap;min-width:160px";
+      // 归属下拉
+      var sel=document.createElement("select");
+      sel.style.cssText="font-size:10px;padding:1px 3px;border:1px solid #ddd;border-radius:3px;max-width:100px";
+      sel.innerHTML='<option value="">-归属-</option>';
+      allNames.forEach(function(n){
+        if(n!==name)sel.innerHTML+='<option value="'+n.replace(/"/g,"&quot;")+'">'+n.replace(/</g,"&lt;")+'</option>';
+      });
+      sel.onchange=function(){
+        if(!this.value)return;
+        API.updateSalesperson(id,{supervisor_id:this.value}).then(function(r){
+          if(r.error)showToast("设置失败: "+r.error.message,"error");
+          else showToast("已设置归属主管","success");
+        });
+      };
+      td.appendChild(document.createTextNode("归属："));
+      td.appendChild(sel);
+      // 插入到操作列前面
+      var tds=tr.querySelectorAll("td");
+      if(tds.length>=5)tds[4].after(td);
+    });
+  }
+  injectSupervisor();
+  new MutationObserver(function(){injectSupervisor()}).observe(document.getElementById("spContainer")||document.body,{childList:true,subtree:true});
+  setTimeout(injectSupervisor,800);
+})();
+</script>
 </body></html>
