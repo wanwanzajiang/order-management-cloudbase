@@ -10,12 +10,15 @@
   async function checkSupervisor(){
     if(!window.currentSp||!window.currentSp.name)return;
     try{
-      var res = await API.getSupervisorTeam(window.currentSp.name);
-      var hasTeam = res.data && res.data.length > 0;
-      if(hasTeam){
-        teamOrdersCache = res.data;
-        showSupervisorBar();
-      }
+      // 先查有没有下属（不管他们有没有订单）
+      var spRes = await DB.collection(COL.SALESPEOPLE).where({supervisor_id:window.currentSp.name}).get();
+      var subNames = (spRes.data||[]).map(function(s){return s.name});
+      if(!subNames.length)return; // 没有下属，不是主管
+      // 显示主管栏
+      showSupervisorBar();
+      // 异步加载团队订单
+      var allRes = await DB.collection(COL.ORDERS).orderBy("created_at","desc").limit(1e3).get();
+      teamOrdersCache = (allRes.data||[]).filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
     }catch(e){
       console.log('检查主管失败:', e);
     }
