@@ -121,10 +121,13 @@
   }
 
   var _vc = window.verifyCode;
+  console.log('[主管] 拦截verifyCode:', !!_vc);
   if(_vc){
     var ov=_vc;
     window.verifyCode=async function(){
+      console.log('[主管] verifyCode调用');
       await ov.apply(this, arguments);
+      console.log('[主管] verifyCode完成, currentSp:', window.currentSp);
       checked = false;
       setTimeout(checkSupervisor, 500);
     };
