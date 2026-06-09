@@ -2,7 +2,7 @@
  * CloudBase 云函数 - admin-ops
  * 数据库用户管理（不占用 Auth 配额）
  *
- * 支持：create-user / delete-user / reset-password
+ * 支持：create-user / delete-user / reset-password / query-salespeople / query-orders
  */
 const crypto = require('crypto');
 
@@ -19,12 +19,14 @@ function randomSalt() {
 }
 
 exports.main = async (event, context) => {
-  const { action, email, password, role, user_id, new_password } = event;
+  const { action, email, password, role, user_id, new_password, filter, limit } = event;
   try {
     switch (action) {
       case 'create-user': return await createUser(email, password, role);
       case 'delete-user': return await deleteUser(user_id);
       case 'reset-password': return await resetPassword(user_id, new_password);
+      case 'query-salespeople': return await querySalespeople(filter);
+      case 'query-orders': return await queryOrders(filter, limit);
       default: return { success: false, error: '未知操作: ' + action };
     }
   } catch (err) {
@@ -79,5 +81,28 @@ async function resetPassword(userId, newPassword) {
     return { success: true, message: '密码已重置' };
   } catch (err) {
     return { success: false, error: '重置失败: ' + (err.message || err) };
+  }
+}
+
+async function querySalespeople(filter) {
+  try {
+    let query = db.collection('salespeople');
+    if (filter) query = query.where(filter);
+    const res = await query.get();
+    return { success: true, data: res.data || [] };
+  } catch (err) {
+    return { success: false, error: err.message || String(err) };
+  }
+}
+
+async function queryOrders(filter, limit) {
+  try {
+    let query = db.collection('orders').orderBy('created_at', 'desc');
+    if (filter) query = query.where(filter);
+    if (limit) query = query.limit(limit);
+    const res = await query.get();
+    return { success: true, data: res.data || [] };
+  } catch (err) {
+    return { success: false, error: err.message || String(err) };
   }
 }

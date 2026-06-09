@@ -1,0 +1,8 @@
+{
+  "name": "admin-ops",
+  "type": "event",
+  "runtime": "Nodejs18.15",
+  "handler": "index.main",
+  "timeout": 15,
+  "envId": "wanwan-d2gafa9gobac0b79b"
+}

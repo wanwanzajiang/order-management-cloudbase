@@ -10,15 +10,16 @@
   async function checkSupervisor(){
     if(!window.currentSp||!window.currentSp.name)return;
     try{
-      // 先查有没有下属（不管他们有没有订单）
-      var spRes = await DB.collection(COL.SALESPEOPLE).where({supervisor_id:window.currentSp.name}).get();
-      var subNames = (spRes.data||[]).map(function(s){return s.name});
+      // 通过云函数查下属（绕过客户端权限限制）
+      var cfRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-salespeople',filter:{supervisor_id:window.currentSp.name}}});
+      var spData = (cfRes.result && cfRes.result.success) ? (cfRes.result.data||[]) : [];
+      var subNames = spData.map(function(s){return s.name});
       if(!subNames.length)return; // 没有下属，不是主管
-      // 显示主管栏
       showSupervisorBar();
       // 异步加载团队订单
-      var allRes = await DB.collection(COL.ORDERS).orderBy("created_at","desc").limit(1e3).get();
-      teamOrdersCache = (allRes.data||[]).filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
+      var allRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-orders',limit:1000}});
+      var allOrders = (allRes.result && allRes.result.success) ? (allRes.result.data||[]) : [];
+      teamOrdersCache = allOrders.filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
     }catch(e){
       console.log('检查主管失败:', e);
     }
@@ -102,8 +103,11 @@
     if(!window.currentSp)return;
     App.showLoading(container);
     try{
-      var res = await API.getSupervisorTeam(window.currentSp.name);
-      teamOrdersCache = res.data || [];
+      var cfRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-salespeople',filter:{supervisor_id:window.currentSp.name}}});
+      var subNames = ((cfRes.result&&cfRes.result.success)?(cfRes.result.data||[]):[]).map(function(s){return s.name});
+      var allRes = await TCB.callFunction({name:'admin-ops',data:{action:'query-orders',limit:1000}});
+      var allOrders = (allRes.result&&allRes.result.success)?(allRes.result.data||[]):[];
+      teamOrdersCache = allOrders.filter(function(o){return subNames.indexOf(o.salesperson_name)>=0});
       renderTeamOrders(teamOrdersCache);
     }catch(e){
       App.showError(container, '加载团队订单失败: '+e.message);
