@@ -55,6 +55,11 @@ async function cleanCompletedOrders(){
 </script>
 <script>
 ;(function(){
+  var spDataMap={};
+  async function loadSPData(){
+    var r=await API.getAllSalespeople(true);
+    (r.data||[]).forEach(function(s){spDataMap[s.id||s._id]=s});
+  }
   function injectSupervisor(){
     var rows=document.querySelectorAll("#spContainer table tbody tr");
     rows.forEach(function(tr){
@@ -87,6 +92,9 @@ async function cleanCompletedOrders(){
           else showToast("已设置归属主管","success");
         });
       };
+      // 预选当前归属主管
+      var sp=spDataMap[id];
+      if(sp&&sp.supervisor_id)sel.value=sp.supervisor_id;
       td.appendChild(document.createTextNode("归属："));
       td.appendChild(sel);
       // 插入到操作列前面
@@ -94,7 +102,7 @@ async function cleanCompletedOrders(){
       if(tds.length>=5)tds[4].after(td);
     });
   }
-  injectSupervisor();
+  loadSPData().then(function(){injectSupervisor()});
   new MutationObserver(function(){injectSupervisor()}).observe(document.getElementById("spContainer")||document.body,{childList:true,subtree:true});
   setTimeout(injectSupervisor,800);
 })();
