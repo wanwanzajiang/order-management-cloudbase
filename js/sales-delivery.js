@@ -46,19 +46,24 @@
         dateInput.value = savedDate;
         dateInput._saved = savedDate;
 
+        // 保存函数：调用 API + 检查结果
+        var doSave = function(val){
+          var v = val || null;
+          dateInput._saved = v;
+          API.updateOrder(id, {delivery_date: v, has_new_photo: false}).then(function(r){
+            if(r.error) showToast('保存失败: ' + (r.error.message || '权限不足'), 'error');
+          }).catch(function(e){
+            showToast('保存异常: ' + (e.message || '网络错误'), 'error');
+          });
+        };
+
         // 用 onblur 保存（比 onchange 更可靠）
         dateInput.onblur = function(){
-          if(this.value !== this._saved){
-            this._saved = this.value;
-            sfUpdate(id, 'delivery_date', this.value || null);
-          }
+          if(this.value !== this._saved) doSave(this.value);
         };
         // change 作为补充（日期选择器关闭时也会触发）
         dateInput.addEventListener('change', function(){
-          if(this.value !== this._saved){
-            this._saved = this.value;
-            sfUpdate(id, 'delivery_date', this.value || null);
-          }
+          if(this.value !== this._saved) doSave(this.value);
         });
 
         row.appendChild(dateInput);
