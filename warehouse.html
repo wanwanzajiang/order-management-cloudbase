@@ -50,7 +50,7 @@ window.undoReturned=async function(id){
 ;
 </script>
 <script>
-// 收回按钮修复：送货后始终显示收回按钮
+// fix: add return button after delivery
 (function(){
   var origRender = renderOrders;
   renderOrders = function(list){
@@ -68,6 +68,49 @@ window.undoReturned=async function(id){
         }
       });
     },200);
+  };
+})();
+</script>
+;</script>
+<script>
+;(function(){
+  var _ro = renderOrders;
+  renderOrders = function(list){
+    _ro(list);
+    setTimeout(function(){
+      var rows = document.querySelectorAll('tr[data-id]');
+      rows.forEach(function(tr){
+        var cells = tr.querySelectorAll('td');
+        var lastTd = cells[cells.length - 1];
+        if(!lastTd) return;
+        var html = lastTd.innerHTML;
+        if(html.indexOf('送货') < 0) return;
+        if(html.indexOf('markReturned') >= 0) return;
+        if(html.indexOf('已收') >= 0) return;
+        var id = tr.getAttribute('data-id');
+        lastTd.innerHTML = html + ' <button onclick="markReturned(\'' + id + '\')\" style=\"font-size:10px;padding:2px 6px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer\">收回</button>';
+      });
+    }, 300);
+  };
+})();
+</script>
+
+<script>
+;(function(){
+  var _ro = renderOrders;
+  renderOrders = function(list){
+    _ro(list);
+    setTimeout(function(){
+      document.querySelectorAll("tr[data-id]").forEach(function(tr){
+        var td = tr.querySelectorAll("td");
+        td = td[td.length - 1];
+        if(!td || td.innerHTML.indexOf("送货") < 0) return;
+        if(td.innerHTML.indexOf("markReturned") >= 0) return;
+        if(td.innerHTML.indexOf("已收") >= 0) return;
+        var id = tr.getAttribute("data-id");
+        td.innerHTML += " <button onclick=\"markReturned('"+id+"')\" style=\"font-size:10px;padding:2px 6px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer\">收回</button>";
+      });
+    }, 300);
   };
 })();
 </script>
