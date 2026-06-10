@@ -107,6 +107,7 @@ window.undoReturned=async function(id){
         if(!td || td.innerHTML.indexOf("送货") < 0) return;
         if(td.innerHTML.indexOf("markReturned") >= 0) return;
         if(td.innerHTML.indexOf("已收") >= 0) return;
+        if(td.innerHTML.indexOf("markReturned") >= 0) return;
         var id = tr.getAttribute("data-id");
         td.innerHTML += " <button onclick=\"markReturned('"+id+"')\" style=\"font-size:10px;padding:2px 6px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer\">收回</button>";
       });
