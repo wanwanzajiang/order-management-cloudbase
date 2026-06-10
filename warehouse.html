@@ -9,7 +9,7 @@
  <td style="text-align:center;">${e.photo_request?"📸":"-"}</td><td style="max-width:120px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td>
  <td>${!0===e.bring_goods||"true"===e.bring_goods?"✅是":!1===e.bring_goods||"false"===e.bring_goods?"❌否":"-"}</td>
  <td>${e.inspection_date||"-"}</td>
- <td>${"已到货"===e.order_status?(e.delivered_at?'✓ 已送 <a href="javascript:void(0)" onclick="undoDelivered(\''+o+'\');return false" style="font-size:10px;color:#e07a5f;text-decoration:none" title="撤销">↩️</a>':'<button onclick="markDelivered(\''+o+'\')\" style="font-size:10px;padding:2px 6px;background:#5DCAA5;color:#fff;border:none;border-radius:3px;cursor:pointer">送货</button>')+" "+(e.delivered_at?(e.returned_at?'✓ 已收 <a href="javascript:void(0)" onclick="undoReturned(\''+o+'\');return false" style="font-size:10px;color:#e07a5f;text-decoration:none" title="撤销">↩️</a>':e.return_date?'<button onclick="markReturned(\''+o+'\')\" style="font-size:10px;padding:2px 6px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer">收回</button>':''):""):"-"}</td>
+ <td>${"已到货"===e.order_status?(e.delivered_at?'✓ 已送 <a href="javascript:void(0)" onclick="undoDelivered(\''+o+'\');return false" style="font-size:10px;color:#e07a5f;text-decoration:none" title="撤销">↩️</a>':'<button onclick="markDelivered(\''+o+'\')\" style="font-size:10px;padding:2px 6px;background:#5DCAA5;color:#fff;border:none;border-radius:3px;cursor:pointer">送货</button>')+" "+(e.delivered_at?(e.returned_at?'✓ 已收 <a href="javascript:void(0)" onclick="undoReturned(\''+o+'\');return false" style="font-size:10px;color:#e07a5f;text-decoration:none" title="撤销">↩️</a>':'<button onclick="markReturned(\''+o+'\')\" style="font-size:10px;padding:2px 6px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer">收回</button>':''):""):"-"}</td>
  <td style="display:flex;gap:4px;flex-wrap:wrap;">
  ${r}
  <select class="form-control status-select" title="状态" onchange="updateStatus('${o}', this.value)" style="width:80px;">
@@ -46,5 +46,29 @@ window.undoReturned=async function(id){
   if(r.error){showToast("撤销失败: "+r.error.message,"error");return;}
   showToast("已撤销收回","success");loadOrders();
 };
+</script>
+;
+</script>
+<script>
+// 收回按钮修复：送货后始终显示收回按钮
+(function(){
+  var origRender = renderOrders;
+  renderOrders = function(list){
+    origRender(list);
+    setTimeout(function(){
+      document.querySelectorAll('tr[data-id]').forEach(function(tr){
+        var td = tr.querySelector('td:last-child');
+        if(!td || !td.textContent.includes('送货')) return;
+        var id = tr.getAttribute('data-id');
+        if(!id) return;
+        var hasReturnBtn = td.innerHTML.includes('markReturned');
+        var hasReturned = td.innerHTML.includes('已收');
+        if(!hasReturnBtn && !hasReturned && td.innerHTML.includes('送货')){
+          td.innerHTML += ' <button onclick="markReturned(\''+id+'\')\" style=\"font-size:10px;padding:2px 6px;background:#F0997B;color:#fff;border:none;border-radius:3px;cursor:pointer\">收回</button>';
+        }
+      });
+    },200);
+  };
+})();
 </script>
 </body></html>
