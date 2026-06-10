@@ -2,17 +2,34 @@
 (function(){
   'use strict';
 
-  // monkey-patch renderResults: 把 delivery_date 存到 card 的 dataset 上
+  // 全局暂存：在渲染前存入，enhanceCards 读取，避免时序问题
+  window._deliveryDates = window._deliveryDates || {};
+
   var _renderResults = renderResults;
   renderResults = function(orders){
+    // 先存 delivery_date 到全局 map（在渲染前）
+    if (orders) {
+      orders.forEach(function(o){
+        window._deliveryDates[o._id || o.id] = o.delivery_date || '';
+      });
+    }
     _renderResults(orders);
+    // 渲染后补充更新 card dataset + 已创建的 input
     setTimeout(function(){
       if (!orders) return;
       orders.forEach(function(o){
-        var card = document.getElementById('card_' + (o._id || o.id));
-        if (card) card.dataset.deliveryDate = o.delivery_date || '';
+        var id = o._id || o.id;
+        var card = document.getElementById('card_' + id);
+        if (!card) return;
+        card.dataset.deliveryDate = o.delivery_date || '';
+        // 如果 enhanceCards 已经创建了 input，补填值
+        var inp = card.querySelector('.dv-delivery-row input[type="date"]');
+        if (inp && !inp.value && o.delivery_date) {
+          inp.value = o.delivery_date;
+          inp._saved = o.delivery_date;
+        }
       });
-    }, 50);
+    }, 250);
   };
 
   function enhanceCards(){
@@ -30,8 +47,8 @@
       }
       if(!id) return;
 
-      // 获取已保存的送货时间
-      var savedDate = card.dataset.deliveryDate || '';
+      // 从全局 map 或 dataset 获取已保存的送货时间
+      var savedDate = window._deliveryDates[id] || card.dataset.deliveryDate || '';
 
       // 添加送货时间输入
       var actSection = card.querySelector('.oc-actions');
@@ -46,10 +63,10 @@
         dateInput.value = savedDate;
         dateInput._saved = savedDate;
 
-        // 保存函数：调用 API + 检查结果
         var doSave = function(val){
           var v = val || null;
           dateInput._saved = v;
+          window._deliveryDates[id] = v || '';
           API.updateOrder(id, {delivery_date: v, has_new_photo: false}).then(function(r){
             if(r.error) showToast('保存失败: ' + (r.error.message || '权限不足'), 'error');
           }).catch(function(e){
@@ -57,11 +74,9 @@
           });
         };
 
-        // 用 onblur 保存（比 onchange 更可靠）
         dateInput.onblur = function(){
           if(this.value !== this._saved) doSave(this.value);
         };
-        // change 作为补充（日期选择器关闭时也会触发）
         dateInput.addEventListener('change', function(){
           if(this.value !== this._saved) doSave(this.value);
         });
@@ -72,13 +87,9 @@
     });
   }
 
-  // 初始执行
   setTimeout(enhanceCards, 500);
 
-  // 监听 DOM 变化
   var container = document.getElementById('resultContainer') || document.body;
-  var observer = new MutationObserver(function(){
-    enhanceCards();
-  });
+  var observer = new MutationObserver(function(){ enhanceCards(); });
   observer.observe(container, { childList: true, subtree: true });
 })();
