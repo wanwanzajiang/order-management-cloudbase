@@ -49,35 +49,31 @@ window.undoReturned=async function(id){
 </script>
 
 <script>
-// 已送出筛选
+// 已送出筛选 + loadOrders monkey-patch
 ;(function(){
-  var whInit = init;
-  init = function(){
+  var added = false;
+  var timer = setInterval(function(){
     var bar = document.querySelector('.filter-bar');
-    if(!bar || document.getElementById('chkDelivered')) return whInit();
+    if(!bar) return;
+    if(added) return;
+    added = true;
+    clearInterval(timer);
     
     var label = document.createElement('label');
-    label.style.cssText = 'font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap';
+    label.style.cssText = 'font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;margin-left:4px';
     label.innerHTML = '<input type="checkbox" id="chkDelivered" style="cursor:pointer"> 🚚 已送出';
-    label.onchange = function(){ loadOrders(); };
+    label.querySelector('input').onchange = loadOrders;
     bar.appendChild(label);
     
-    // Monkey-patch loadOrders to handle the new filter
-    var _loadOrders = loadOrders;
-    loadOrders = function(){
-      var origRender = renderOrders;
-      if(document.getElementById('chkDelivered') && document.getElementById('chkDelivered').checked){
-        var _ro = renderOrders;
-        renderOrders = function(list){
-          list = list.filter(function(o){ return o.delivered_at && !o.returned_at; });
-          _ro(list);
-        };
+    // Override renderOrders to filter when checkbox is checked
+    var _ro = renderOrders;
+    renderOrders = function(list){
+      var chk = document.getElementById('chkDelivered');
+      if(chk && chk.checked){
+        list = list.filter(function(o){ return o.delivered_at && !o.returned_at; });
       }
-      _loadOrders();
+      _ro(list);
     };
-    
-    whInit();
-  };
-})();
-</script>
+  }, 300);
+})();</script>
 </body></html>

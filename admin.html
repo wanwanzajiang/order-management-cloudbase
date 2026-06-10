@@ -110,13 +110,19 @@ async function cleanCompletedOrders(){
 </script>
 
 <script>
-// 业务员搜索：在创建订单时过滤业务员下拉
+// 业务员搜索
 ;(function(){
-  var obs = new MutationObserver(function(){
+  var initDone = false;
+  var timer = setInterval(function(){
     var sel = document.getElementById('salespersonName');
-    if(!sel || sel.dataset.searchAdded) return;
-    sel.dataset.searchAdded = '1';
+    if(!sel || sel.options.length < 2) return;
+    if(initDone) return;
+    initDone = true;
     
+    // Save original options
+    var allOpts = [];
+    for(var i=0; i<sel.options.length; i++) allOpts.push({text:sel.options[i].textContent, value:sel.options[i].value});
+
     // Create search input
     var div = document.createElement('div');
     div.style.cssText = 'margin-bottom:4px';
@@ -125,33 +131,29 @@ async function cleanCompletedOrders(){
     inp.placeholder = '🔍 搜索业务员...';
     inp.style.cssText = 'width:200px;padding:4px 8px;font-size:12px;border:1px solid #ddd;border-radius:4px';
     
-    // Save original options
-    var allOpts = [];
-    sel.querySelectorAll('option').forEach(function(o){ allOpts.push({text:o.textContent, value:o.value}); });
-    
     inp.oninput = function(){
       var q = inp.value.toLowerCase();
       sel.innerHTML = '';
-      var hasSelect = false;
       allOpts.forEach(function(o){
-        if(!q || o.textContent.toLowerCase().includes(q) || o.value === ''){
+        if(!q || o.textContent.toLowerCase().includes(q)){
           var opt = document.createElement('option');
           opt.value = o.value;
-          opt.textContent = o.textContent;
+          opt.textContent = o.text;
           sel.appendChild(opt);
         }
       });
-      // Keep selected if still visible
-      var found = sel.querySelector('option[value="'+sel.dataset.lastVal+'"]');
-      if(found) sel.value = sel.dataset.lastVal;
+      if(sel.dataset.lastVal){
+        var found = Array.from(sel.options).find(function(o){ return o.value === sel.dataset.lastVal; });
+        if(found) sel.value = sel.dataset.lastVal;
+      }
     };
+    
     sel.addEventListener('change', function(){ sel.dataset.lastVal = sel.value; });
     sel.dataset.lastVal = sel.value;
     
     div.appendChild(inp);
     sel.parentElement.insertBefore(div, sel);
-  });
-  obs.observe(document.body, {childList:true, subtree:true});
-})();
-</script>
+  }, 500);
+  setTimeout(function(){ clearInterval(timer); }, 10000);
+})();</script>
 </body></html>
