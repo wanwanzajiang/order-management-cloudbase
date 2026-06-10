@@ -108,4 +108,50 @@ async function cleanCompletedOrders(){
   setTimeout(injectSupervisor,800);
 })();
 </script>
+
+<script>
+// 业务员搜索：在创建订单时过滤业务员下拉
+;(function(){
+  var obs = new MutationObserver(function(){
+    var sel = document.getElementById('salespersonName');
+    if(!sel || sel.dataset.searchAdded) return;
+    sel.dataset.searchAdded = '1';
+    
+    // Create search input
+    var div = document.createElement('div');
+    div.style.cssText = 'margin-bottom:4px';
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = '🔍 搜索业务员...';
+    inp.style.cssText = 'width:200px;padding:4px 8px;font-size:12px;border:1px solid #ddd;border-radius:4px';
+    
+    // Save original options
+    var allOpts = [];
+    sel.querySelectorAll('option').forEach(function(o){ allOpts.push({text:o.textContent, value:o.value}); });
+    
+    inp.oninput = function(){
+      var q = inp.value.toLowerCase();
+      sel.innerHTML = '';
+      var hasSelect = false;
+      allOpts.forEach(function(o){
+        if(!q || o.textContent.toLowerCase().includes(q) || o.value === ''){
+          var opt = document.createElement('option');
+          opt.value = o.value;
+          opt.textContent = o.textContent;
+          sel.appendChild(opt);
+        }
+      });
+      // Keep selected if still visible
+      var found = sel.querySelector('option[value="'+sel.dataset.lastVal+'"]');
+      if(found) sel.value = sel.dataset.lastVal;
+    };
+    sel.addEventListener('change', function(){ sel.dataset.lastVal = sel.value; });
+    sel.dataset.lastVal = sel.value;
+    
+    div.appendChild(inp);
+    sel.parentElement.insertBefore(div, sel);
+  });
+  obs.observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 </body></html>

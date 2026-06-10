@@ -47,4 +47,37 @@ window.undoReturned=async function(id){
   showToast("已撤销收回","success");loadOrders();
 };
 </script>
+
+<script>
+// 已送出筛选
+;(function(){
+  var whInit = init;
+  init = function(){
+    var bar = document.querySelector('.filter-bar');
+    if(!bar || document.getElementById('chkDelivered')) return whInit();
+    
+    var label = document.createElement('label');
+    label.style.cssText = 'font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap';
+    label.innerHTML = '<input type="checkbox" id="chkDelivered" style="cursor:pointer"> 🚚 已送出';
+    label.onchange = function(){ loadOrders(); };
+    bar.appendChild(label);
+    
+    // Monkey-patch loadOrders to handle the new filter
+    var _loadOrders = loadOrders;
+    loadOrders = function(){
+      var origRender = renderOrders;
+      if(document.getElementById('chkDelivered') && document.getElementById('chkDelivered').checked){
+        var _ro = renderOrders;
+        renderOrders = function(list){
+          list = list.filter(function(o){ return o.delivered_at && !o.returned_at; });
+          _ro(list);
+        };
+      }
+      _loadOrders();
+    };
+    
+    whInit();
+  };
+})();
+</script>
 </body></html>

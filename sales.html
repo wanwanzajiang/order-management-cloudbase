@@ -25,4 +25,51 @@
  </div>
  </div>`}),t.innerHTML=s}function renderProducts(e){if(!e)return'<span style="color:#ccc;padding:8px;">-</span>';let t=null;if("string"==typeof e&&e.startsWith("["))try{t=JSON.parse(e)}catch(e){}return t&&Array.isArray(t)&&0<t.length?t.map(e=>`<div class="pi-item">${e.brand?`<span class="pi-brand">${App.escapeHtml(e.brand)}</span>`:""}${`<span class="pi-model">${App.escapeHtml(e.model||"-")}</span>`} ${e.qty?`<span class="pi-qty">×${e.qty}</span>`:""} ${e.delivery?`<span class="pi-delivery">${App.escapeHtml(e.delivery)}</span>`:""}</div>`).join(""):`<span style="color:#555;font-size:12px;padding:8px;">${App.escapeHtml(e)}</span>`}async function sfUpdate(e,t,n){var o={};n=""!==n&&null!==n&&"null"!==n?n:null,"true"===n&&(n=!0),"false"===n&&(n=!1),o[t]=n,o.has_new_photo=!1,await API.updateOrder(e,o),(()=>{var r=document.getElementById("card_"+e);if(r){var b=r.querySelector(".new-photo-badge");b&&(b.style.display="none")}})(),"photo_request"===t&&(()=>{var r=document.getElementById("pn_row_"+e);r&&(r.style.display=n?"flex":"none")})()}function resetSearch(){document.getElementById("searchInvoice").value="",document.getElementById("searchStatus").value="",showWelcome()}Auth.requireRole([CONFIG.ROLES.SALES,CONFIG.ROLES.ADMIN,CONFIG.ROLES.WAREHOUSE,CONFIG.ROLES.SUPER])&&init(),document.addEventListener("keydown",e=>{"Enter"===e.key&&"flex"===document.getElementById("codeModal").style.display&&verifyCode()})</script><script src="js/sales-delivery.js"></script>
 <script src="js/sales-supervisor.js"></script>
+
+<script>
+// 送货时间限制：非已到货状态置灰
+;(function(){
+  var _sfUpdate = sfUpdate;
+  sfUpdate = async function(id, field, value){
+    if(field === 'delivery_date'){
+      // Find the order card to check status
+      var card = document.getElementById('card_'+id);
+      if(card){
+        var statusEl = card.querySelector('.oc-status');
+        if(statusEl && statusEl.textContent !== '已到货'){
+          showToast('⚠️ 到货后才能设置送货时间','warning');
+          // Reset the input
+          var dpi = card.querySelector('#dp_'+id);
+          if(dpi) dpi.value = dpi.dataset.origVal || '';
+          return;
+        }
+      }
+    }
+    return _sfUpdate(id, field, value);
+  };
+  
+  // Also grey out the input visually when rendering
+  var _renderResults = renderResults;
+  renderResults = function(orders){
+    _renderResults(orders);
+    setTimeout(function(){
+      document.querySelectorAll('.order-card').forEach(function(card){
+        var statusEl = card.querySelector('.oc-status');
+        if(!statusEl || statusEl.textContent === '已到货') return;
+        // Grey out delivery_date inputs
+        var dateInputs = card.querySelectorAll('input[type="date"]');
+        dateInputs.forEach(function(inp){
+          var row = inp.closest('.oc-info-row, div');
+          if(row && row.textContent.includes('送货时间')){
+            inp.disabled = true;
+            inp.style.opacity = '0.5';
+            inp.style.cursor = 'not-allowed';
+            inp.title = '到货后可设置';
+          }
+        });
+      });
+    }, 300);
+  };
+})();
+</script>
 </body></html>
