@@ -21,7 +21,7 @@
  <td style="text-align:center;">${e.photo_request?"✅":"-"}</td><td style="max-width:100px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td><td style="text-align:center;">${e.bring_goods?"✅":"-"}</td><td style="white-space:nowrap;">${e.inspection_date||"-"}</td><td style="white-space:nowrap;">${e.return_date||"-"}</td>
  <td style="white-space:nowrap;font-size:12px;color:#999;">${App.formatDate(e.created_at)}</td>
  <td><button class="btn btn-danger btn-sm" onclick="deleteOrder('${o}')">删除</button></td>
- </tr>`}),a+="</tbody></table></div>",t.innerHTML=a}else App.showEmpty(t,"暂无订单数据")}async function loadSalespeopleList(){var e=document.getElementById("spContainer"),{data:t,error:r}=(App.showLoading(e),await API.getAllSalespeople(!0));r?App.showError(e,"加载失败: "+r.message):t&&0!==t.length?renderSalespeople(t):App.showEmpty(e,"暂无业务员")}function renderSalespeople(e){var t=document.getElementById("spContainer");let o='<div class="table-wrapper"><table><thead><tr><th>业务员姓名</th><th>识别码</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';e.forEach(e=>{var t=!1!==e.is_active,r=e._id||e.id;o+=`<tr data-id="${r}">
+ </tr>`}),a+="</tbody></table></div>",t.innerHTML=a}else App.showEmpty(t,"暂无订单数据")}async function loadSalespeopleList(){var e=document.getElementById("spContainer"),{data:t,error:r}=(App.showLoading(e),await API.getAllSalespeople(!0));r?App.showError(e,"加载失败: "+r.message):t&&0!==t.length?renderSalespeople(t):App.showEmpty(e,"暂无业务员")}(function(){var _origRS=renderSalespeople;renderSalespeople=function(list){var c=document.getElementById("spContainer");if(c&&list)c._spCache={};if(list)list.forEach(function(s){c._spCache[s.id||s._id]=s});return _origRS.apply(this,arguments)}})();function renderSalespeople(e){var t=document.getElementById("spContainer");let o='<div class="table-wrapper"><table><thead><tr><th>业务员姓名</th><th>识别码</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';e.forEach(e=>{var t=!1!==e.is_active,r=e._id||e.id;o+=`<tr data-id="${r}">
  <td><input type="text" class="inline-edit" id="spname-${r}" value="${App.escapeHtml(e.name)}" style="width:120px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;" ${t?"":'disabled style="background:#f5f5f5;color:#999;"'}></td>
  <td><input type="text" class="inline-edit" id="spcode-${r}" value="${App.escapeHtml(e.access_code||"")}" style="width:100px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;"></td>
  <td><span class="status-badge" style="background:${t?"#e8f5e9":"#fff3e0"};color:${t?"#2e7d32":"#e65100"};padding:2px 10px;border-radius:10px;font-size:12px;">${t?"✅ 正常":"⛔ 已停用"}</span></td>
@@ -91,6 +91,13 @@ async function cleanCompletedOrders(){
       
       td.appendChild(document.createTextNode("归属："));
       td.appendChild(sel);
+      // 预选：从渲染数据中查找 supervisor_id
+      (function(){
+        var listEl=document.getElementById("spContainer");
+        if(!listEl||!listEl._spCache)return;
+        var sp=listEl._spCache[id];
+        if(sp&&sp.supervisor_id)sel.value=sp.supervisor_id;
+      })();
       // 插入到操作列前面
       var tds=tr.querySelectorAll("td");
       if(tds.length>=5)tds[4].after(td);
