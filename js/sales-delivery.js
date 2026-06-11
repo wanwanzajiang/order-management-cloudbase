@@ -59,7 +59,7 @@
         row.innerHTML = '<b style="font-size:12px;">📅 送货时间：</b> ';
         var dateInput = document.createElement('input');
         dateInput.type = 'date';
-        dateInput.style.cssText = 'font-size:12px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;width:130px;';
+        dateInput.style.cssText = 'font-size:12px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;width:130px;' + (savedDate ? 'font-weight:700;color:#e67e22;background:#fff8f0;border-color:#e67e22;' : '');
         dateInput.value = savedDate;
         dateInput._saved = savedDate;
 
@@ -67,6 +67,8 @@
           var v = val || null;
           dateInput._saved = v;
           window._deliveryDates[id] = v || '';
+          if(v){ dateInput.style.cssText += 'font-weight:700;color:#e67e22;background:#fff8f0;border-color:#e67e22;'; }
+          else { dateInput.style.cssText = 'font-size:12px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;width:130px;'; }
           API.updateOrder(id, {delivery_date: v, has_new_photo: false}).then(function(r){
             if(r.error) showToast('保存失败: ' + (r.error.message || '权限不足'), 'error');
           }).catch(function(e){
