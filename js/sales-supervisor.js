@@ -66,7 +66,6 @@
     c.innerHTML=h;
   }
 
-  console.log('SV-POLL start');
   var lastSp = null;
   setInterval(function(){
     if(currentSp && currentSp.name && (!lastSp || lastSp.name !== currentSp.name)){
