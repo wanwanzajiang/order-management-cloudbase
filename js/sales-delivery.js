@@ -1,4 +1,4 @@
-// ========== 业务员送货时间输入 ==========
+// ========== 业务员业务发货时间输入 ==========
 (function(){
   'use strict';
 
@@ -47,16 +47,16 @@
       }
       if(!id) return;
 
-      // 从全局 map 或 dataset 获取已保存的送货时间
+      // 从全局 map 或 dataset 获取已保存的业务发货时间
       var savedDate = window._deliveryDates[id] || card.dataset.deliveryDate || '';
 
-      // 添加送货时间输入
+      // 添加业务发货时间输入
       var actSection = card.querySelector('.oc-actions');
       if(actSection && !card.querySelector('.dv-delivery-row')){
         var row = document.createElement('div');
         row.className = 'dv-delivery-row';
         row.style.cssText = 'font-size:12px;padding:6px 0;border-top:1px dashed #e0e0e0;margin-top:4px;';
-        row.innerHTML = '<b style="font-size:12px;">📅 送货时间：</b> ';
+        row.innerHTML = '<b style="font-size:12px;">📅 业务发货时间：</b> ';
         var dateInput = document.createElement('input');
         dateInput.type = 'date';
         dateInput.style.cssText = 'font-size:12px;padding:2px 6px;border:1px solid #ccc;border-radius:4px;width:130px;' + (savedDate ? 'font-weight:700;color:#e67e22;background:#fff8f0;border-color:#e67e22;' : '');
