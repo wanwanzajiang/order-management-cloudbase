@@ -50,32 +50,4 @@ window.undoReturned=async function(id){
 };
 </script>
 
-<script>
-// 已送出筛选 + loadOrders monkey-patch
-;(function(){
-  var added = false;
-  var timer = setInterval(function(){
-    var bar = document.querySelector('.filter-bar');
-    if(!bar) return;
-    if(added) return;
-    added = true;
-    clearInterval(timer);
-    
-    var label = document.createElement('label');
-    label.style.cssText = 'font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;margin-left:4px';
-    label.innerHTML = '<input type="checkbox" id="chkNeedDeliver" style="cursor:pointer"> 📦 待发货';
-    label.querySelector('input').onchange = loadOrders;
-    bar.appendChild(label);
-    
-    // Override renderOrders to filter when checkbox is checked
-    var _ro = renderOrders;
-    renderOrders = function(list){
-      var chk = document.getElementById('chkNeedDeliver');
-      if(chk && chk.checked){
-        list = list.filter(function(o){ return !!o.inspection_date; });
-      }
-      _ro(list);
-    };
-  }, 300);
-})();</script>
 </body></html>
