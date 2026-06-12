@@ -62,5 +62,17 @@ var Notifications = {
           }
         });
     } catch(e) {}
+  },
+
+  async clearAll(sp) {
+    try {
+      var r = await DB.collection('notifications').where({ salesperson_name: sp }).limit(100).get();
+      var list = r.data || [];
+      for (var i = 0; i < list.length; i++) {
+        await DB.collection('notifications').doc(list[i]._id).remove();
+      }
+      localStorage.removeItem('cb_read_notify_' + sp);
+      return true;
+    } catch(e) { return false; }
   }
 };
