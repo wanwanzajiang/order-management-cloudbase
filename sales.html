@@ -49,19 +49,20 @@ function formatNotifyTime(ts){
 async function renderNotifyList(){
   if (!currentSp || !currentSp.name) return;
   var list = await Notifications.getList(currentSp.name, 30);
+  var readIds = Notifications._getRead(currentSp.name);
   var el = document.getElementById('notifyList');
   if (!list.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:#999;font-size:13px">暂无通知</div>'; return; }
   var h = '';
   for (var i = 0; i < list.length; i++) {
-    var n = list[i];
-    h += '<div class="notify-item'+(n.read?'':' unread')+'" data-nid="'+n._id+'" data-inv="'+(n.invoice_no||'')+'" onclick="onNotifyClick(this)" style="'+(!n.read?'':'opacity:.7')+'">';
-    if (!n.read) h += '<span class="notify-dot"></span>';
+    var n = list[i], isRead = readIds.indexOf(n._id) >= 0;
+    h += '<div class="notify-item'+(isRead?'':' unread')+'" data-nid="'+n._id+'" data-inv="'+(n.invoice_no||'')+'" onclick="onNotifyClick(this)" style="'+(isRead?'opacity:.7':'')+'">';
+    if (!isRead) h += '<span class="notify-dot"></span>';
     h += '<span class="nt-msg">'+n.message+'</span><span class="nt-time">'+formatNotifyTime(n.created_at)+'</span></div>';
   }
   el.innerHTML = h;
 }
 async function onNotifyClick(el){
-  await Notifications.markRead(el.dataset.nid);
+  await Notifications.markRead(currentSp.name, el.dataset.nid);
   document.getElementById('notifyPanel').style.display = 'none';
   updateNotifyBadge();
   var inv = el.dataset.inv;
