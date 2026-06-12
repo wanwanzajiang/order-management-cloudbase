@@ -34,6 +34,14 @@
 
   function enhanceCards(){
     document.querySelectorAll('.order-card').forEach(function(card){
+      var statusEl = card.querySelector('.oc-status');
+      var st = statusEl ? statusEl.textContent.trim() : '';
+      if (st !== '已到货') {
+        var ex = card.querySelector('.dv-delivery-row');
+        if (ex) ex.remove();
+        card.dataset.delivery = '';
+        return;
+      }
       if(card.dataset.delivery) return;
       card.dataset.delivery = '1';
 
