@@ -4,7 +4,7 @@
  <td style="max-width:260px;font-size:11px;">${t}</td>
  <td><strong>${e.quantity||"-"}</strong></td>
  <td>${App.escapeHtml(e.salesperson_name||"-")}</td>
- <td><input type="date" class="form-control ship-date" value="${e.shipping_date||""}" onchange="updateShipping('${o}', this.value)" style="width:150px;padding:4px 6px;font-size:13px;" title="预计发货时间"></td>
+ <td><input type="date" class="form-control ship-date" value="${e.shipping_date||""}" onchange="updateShipping('${o}', this.value)" style="width:110px;padding:4px 6px;font-size:12px;" title="预计发货时间"></td>
  <td><input type="text" class="notes-input warehouse-notes" value="${App.escapeHtml(e.warehouse_notes||"")}" onblur="updateWarehouseNotes('${o}', this.value)"></td>
  <td style="text-align:center;">${e.photo_request?"📸":"-"}</td><td style="max-width:120px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td>
  <td>${!0===e.bring_goods||"true"===e.bring_goods?"✅是":!1===e.bring_goods||"false"===e.bring_goods?"❌否":"-"}</td>
