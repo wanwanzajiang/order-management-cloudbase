@@ -136,10 +136,8 @@ async function createAuthTicket(email, password) {
       return { success: false, error: '密码错误' };
     }
     const userId = user._id || user.email;
-    const ticket = app.auth().createTicket(userId, { refresh: 3600000 });
     return {
       success: true,
-      ticket: ticket,
       user: {
         id: user._id,
         email: user.email,
