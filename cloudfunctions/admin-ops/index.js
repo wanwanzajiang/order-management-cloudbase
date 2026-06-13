@@ -28,6 +28,7 @@ exports.main = async (event, context) => {
       case 'query-salespeople': return await querySalespeople(filter);
       case 'query-orders': return await queryOrders(filter, limit);
       case 'update-order': return await updateOrder(user_id, filter);
+      case 'auth-ticket': return await createAuthTicket(email, password);
       default: return { success: false, error: '未知操作: ' + action };
     }
   } catch (err) {
@@ -114,5 +115,39 @@ async function updateOrder(id, updates) {
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message || String(err) };
+  }
+}
+
+async function createAuthTicket(email, password) {
+  if (!email || !password) {
+    return { success: false, error: '邮箱和密码必填' };
+  }
+  try {
+    const res = await db.collection('users').where({ email: email.toLowerCase().trim() }).get();
+    if (!res.data || res.data.length === 0) {
+      return { success: false, error: '账号不存在' };
+    }
+    const user = res.data[0];
+    if (!user.password_hash) {
+      return { success: false, error: '账号未设置密码' };
+    }
+    const hash = hashPw(password, user.salt || '');
+    if (hash !== user.password_hash) {
+      return { success: false, error: '密码错误' };
+    }
+    const userId = user._id || user.email;
+    const ticket = app.auth().createTicket(userId, { refresh: 3600000 });
+    return {
+      success: true,
+      ticket: ticket,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role || 'sales',
+        full_name: user.full_name || email.split('@')[0]
+      }
+    };
+  } catch (err) {
+    return { success: false, error: '登录失败: ' + (err.message || String(err)) };
   }
 }
