@@ -53,7 +53,7 @@ window.undoReturned=async function(id){
 </body></html><script>
 // 仓库操作触发通知
 ;(function(){
-  setTimeout(function(){
+  
     var _upd = updateStatus;
     updateStatus = async function(id, status) {
       try {
@@ -96,6 +96,6 @@ window.undoReturned=async function(id){
       } catch(e) {}
       return _fc();
     };
-  }, 1500);
+  ;
 })();
 </script>
