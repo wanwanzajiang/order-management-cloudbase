@@ -110,19 +110,21 @@ async function cleanCompletedOrders(){
 })();
 </script>
 <div id="editModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
-<div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.2)">
+<div style="background:#fff;border-radius:12px;padding:24px;max-width:550px;width:95%;box-shadow:0 10px 40px rgba(0,0,0,.2)">
 <h3 style="margin:0 0 4px 0">📝 编辑产品明细</h3>
-<p style="font-size:12px;color:#888;margin:0 0 12px 0">直接编辑下方内容，格式保持不变</p>
-<textarea id="editProductText" style="width:100%;height:180px;font-family:monospace;font-size:13px;padding:10px;border:2px solid #667eea;border-radius:8px;resize:vertical"></textarea>
-<p style="font-size:11px;color:#aaa;margin:6px 0 0 0" id="editProductMsg"></p>
+<p style="font-size:12px;color:#888;margin:0 0 10px 0;display:flex;justify-content:space-between"><span id="editProductMsg"></span><button class="btn btn-sm" style="background:#f0f4ff;color:#667eea;border:1px dashed #9af;font-size:11px;padding:3px 10px" onclick="editAddRow()">+ 添加一行</button></p>
+<div id="editProductList" style="max-height:300px;overflow-y:auto"></div>
 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('editModal').style.display='none'">取消</button>
 <button class="btn btn-primary btn-sm" id="editSaveBtn" onclick="saveProductEdit()">💾 保存</button>
 </div></div></div>
 <script>
-var _editOrderId=null;
-async function editProducts(oid){_editOrderId=oid;document.getElementById("editProductMsg").textContent="";document.getElementById("editModal").style.display="flex";var t=document.getElementById("editProductText");t.value="加载中...";try{var e=await DB.collection("orders").doc(oid).get();if(e.data&&e.data[0]){var r=e.data[0].product_model||"";try{r=JSON.parse(r);r=JSON.stringify(r,null,2)}catch(e){}t.value=r}else t.value=""}catch(e){t.value="加载失败: "+e.message}}
-async function saveProductEdit(){if(!_editOrderId)return;var e=document.getElementById("editSaveBtn");e.disabled=!0;e.textContent="保存中...";var t=document.getElementById("editProductText").value.trim();if(!t){document.getElementById("editProductMsg").textContent="❌ 内容不能为空";e.disabled=!1;e.textContent="💾 保存";return}var r=await API.updateOrder(_editOrderId,{product_model:t});r.error?document.getElementById("editProductMsg").textContent="❌ 保存失败: "+(r.error.message||""):(document.getElementById("editModal").style.display="none",showToast("✅ 产品明细已更新","success"),await loadOrders());e.disabled=!1;e.textContent="💾 保存"}
+var _editOrderId=null,_editProducts=[];
+function editAddRow(){_editProducts.push({model:"",qty:"",delivery:""});renderEditList()}
+function editRemoveRow(i){_editProducts.splice(i,1);renderEditList()}
+function renderEditList(){var e=document.getElementById("editProductList"),h="";for(var i=0;i<_editProducts.length;i++){var p=_editProducts[i];h+='<div style="display:flex;gap:6px;align-items:center;padding:6px 8px;margin-bottom:4px;background:#fff;border-radius:4px;border:0.5px solid #e0e0e0"><span style="font-size:11px;color:#aaa;width:24px">#'+(i+1)+'</span><input class="ep-model" value="'+App.escapeHtml(p.model||"")+'" placeholder="型号" style="flex:1.8;min-width:80px;padding:4px 6px;font-size:12px;border:1px solid #ddd;border-radius:4px" onchange="_editProducts['+i+'].model=this.value"><input class="ep-qty" value="'+App.escapeHtml(p.qty||"")+'" placeholder="数量" style="width:60px;padding:4px 6px;font-size:12px;border:1px solid #ddd;border-radius:4px" onchange="_editProducts['+i+'].qty=this.value"><input class="ep-delivery" value="'+App.escapeHtml(p.delivery||"")+'" placeholder="货期" style="flex:1;min-width:60px;padding:4px 6px;font-size:12px;border:1px solid #ddd;border-radius:4px" onchange="_editProducts['+i+'].delivery=this.value"><button onclick="editRemoveRow('+i+')" style="padding:0 6px;background:none;border:none;cursor:pointer;color:#e24b4a;font-size:16px;line-height:1" title="删除此行">×</button></div>'}e.innerHTML=h||'<div style="text-align:center;color:#ccc;padding:20px;font-size:13px">暂无产品，请点「+ 添加一行」</div>'}
+async function editProducts(oid){_editOrderId=oid;document.getElementById("editProductMsg").textContent="";document.getElementById("editModal").style.display="flex";try{var r=await DB.collection("orders").doc(oid).get();if(r.data&&r.data[0]){var p=r.data[0].product_model||"";try{p=JSON.parse(p);_editProducts=Array.isArray(p)?p:[]}catch(e){_editProducts=[]}}else _editProducts=[]}catch(e){_editProducts=[]}renderEditList()}
+async function saveProductEdit(){if(!_editOrderId)return;var e=document.getElementById("editSaveBtn");e.disabled=!0;e.textContent="保存中...";_editProducts=_editProducts.filter(function(p){return p.model&&p.model.trim()});var t=JSON.stringify(_editProducts);var r=await API.updateOrder(_editOrderId,{product_model:t});r.error?(document.getElementById("editProductMsg").textContent="❌ 保存失败: "+(r.error.message||""),e.disabled=!1,e.textContent="💾 保存"):(document.getElementById("editModal").style.display="none",showToast("✅ 产品明细已更新","success"),await loadOrders())}
 </script>
 
 
