@@ -6,7 +6,7 @@
  <td>${App.escapeHtml(e.salesperson_name||"-")}</td>
  <td><input type="date" class="form-control ship-date" value="${e.shipping_date||""}" onchange="updateShipping('${o}', this.value)" style="width:100px;padding:2px 4px;font-size:12px;font-family:inherit" title="预计发货时间"></td>
  <td><input type="text" class="notes-input warehouse-notes" value="${App.escapeHtml(e.warehouse_notes||"")}" onblur="updateWarehouseNotes('${o}', this.value)"></td>
- <td style="text-align:center;">${e.photo_request?"📸":"-"}</td><td style="max-width:120px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${App.escapeHtml(e.photo_notes||"")}">${App.escapeHtml(e.photo_notes||"-")}</td>
+ <td style="text-align:center;">${e.photo_request?"📸":"-"}</td><td style="max-width:120px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="${App.escapeHtml(e.photo_notes||"")}" onclick="var t=this.title;if(t)showToast(t)">${App.escapeHtml(e.photo_notes||"-")}</td>
  <td>${!0===e.bring_goods||"true"===e.bring_goods?"✅是":!1===e.bring_goods||"false"===e.bring_goods?"❌否":"-"}</td>
  <td>${e.inspection_date||"-"}</td>
  <td>${e.return_date||"-"}</td>
