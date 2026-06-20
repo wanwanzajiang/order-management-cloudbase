@@ -74,8 +74,20 @@ document.addEventListener('click', function(e){
     p.style.display = 'none';
   }
 });
-setTimeout(function(){updateNotifyBadge()},2000);async function clearNotifyAll(){if(!confirm('确定清空所有通知？'))return;await Notifications.clearAll(currentSp.name);updateNotifyBadge();renderNotifyList()}setInterval(function(){
-  if (currentSp && currentSp.name) { updateNotifyBadge(); }
+setTimeout(function(){updateNotifyBadge()},2000);async function clearNotifyAll(){if(!confirm('确定清空所有通知？'))return;await Notifications.clearAll(currentSp.name);updateNotifyBadge();renderNotifyList()}try{'Notification'in window&&Notification.permission==='default'&&Notification.requestPermission()}catch(e){}
+setInterval(function(){
+  if (currentSp && currentSp.name) {
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        var _nc = window._lastNc || 0;
+        Notifications.getUnread(currentSp.name).then(function(c) {
+          if (c > _nc) new Notification('📦 进度回复', {body: c + ' 条未读通知', icon: 'favicon-32.png'});
+          window._lastNc = c;
+        }).catch(function(){});
+      }
+    } catch(e) {}
+    updateNotifyBadge();
+  }
 }, 30000);
 </script>
 
