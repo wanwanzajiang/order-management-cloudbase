@@ -74,7 +74,17 @@ document.addEventListener('click', function(e){
     p.style.display = 'none';
   }
 });
-setTimeout(function(){updateNotifyBadge()},2000);async function clearNotifyAll(){if(!confirm('确定清空所有通知？'))return;await Notifications.clearAll(currentSp.name);updateNotifyBadge();renderNotifyList()}try{'Notification'in window&&Notification.permission==='default'&&Notification.requestPermission()}catch(e){}
+setTimeout(function(){updateNotifyBadge()},2000);async function clearNotifyAll(){if(!confirm('确定清空所有通知？'))return;await Notifications.clearAll(currentSp.name);updateNotifyBadge();renderNotifyList()}
+setTimeout(function(){
+  var bell = document.getElementById('notifyBell');
+  if (bell) {
+    bell.addEventListener('click', function() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }, {once: true});
+  }
+}, 2000);
 setInterval(function(){
   if (currentSp && currentSp.name) {
     try {
