@@ -78,11 +78,13 @@
       if (val > max) val = max;
       if (val < 0) val = 0;
       el.value = val;
-      DB.collection(COL.ORDERS).doc(oid).get().then(function(r) {
+        DB.collection(COL.ORDERS).doc(oid).get().then(function(r) {
         if (!r.data || !r.data[0]) return;
         var pm = JSON.parse(r.data[0].product_model || '[]');
         if (idx >= 0 && idx < pm.length) pm[idx].arrived_qty = val;
-        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).catch(function(){});
+        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
+          if (typeof loadOrders === 'function') loadOrders();
+        }).catch(function(){});
       }).catch(function(){});
     },
     fillAll: function(el) {
@@ -123,14 +125,14 @@
         setTimeout(enhanceProductCells, 500);
         return;
       }
-      if (role === 'sales' && typeof searchOrders === 'function') {
+      if (role === 'sales' && typeof renderResults === 'function') {
         clearInterval(timer);
-        var origSearch = searchOrders;
-        window.searchOrders = function() {
-          origSearch.apply(this, arguments);
+        var origRR = renderResults;
+        window.renderResults = function(d) {
+          origRR(d);
           setTimeout(enhanceProductCells, 100);
         };
-        setTimeout(enhanceProductCells, 500);
+        setTimeout(enhanceProductCells, 800);
         return;
       }
       if (role === 'admin' && typeof renderOrders === 'function') {
