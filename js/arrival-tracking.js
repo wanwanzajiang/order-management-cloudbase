@@ -110,42 +110,34 @@
     }
   };
 
-  /* 注入到渲染函数 */
-  var tries = 0;
-  var timer = setInterval(function() {
-    tries++;
+  /* 轮询增强：持续扫描DOM */
+  var patchApplied = false;
+  var pollTimer = setInterval(function(){
+    var cells = document.querySelectorAll('[data-pm]');
+    if (cells.length > 0) enhanceProductCells();
+  }, 1500);
+
+  /* 猴子补丁：让后续渲染也能自动增强 */
+  var patchTries = 0;
+  var patchTimer = setInterval(function(){
+    patchTries++;
     try {
-      if (role === 'warehouse' && typeof loadOrders === 'function') {
-        clearInterval(timer);
+      if (role === 'warehouse' && typeof loadOrders === 'function' && !patchApplied) {
+        patchApplied = true;
         var origLO = loadOrders;
-        window.loadOrders = async function() {
-          await origLO();
-          setTimeout(enhanceProductCells, 100);
-        };
-        setTimeout(enhanceProductCells, 500);
-        return;
+        window.loadOrders = async function() { await origLO(); setTimeout(enhanceProductCells, 100); };
       }
-      if (role === 'sales' && typeof renderResults === 'function') {
-        clearInterval(timer);
+      if (role === 'sales' && typeof renderResults === 'function' && !patchApplied) {
+        patchApplied = true;
         var origRR = renderResults;
-        window.renderResults = function(d) {
-          origRR(d);
-          setTimeout(enhanceProductCells, 100);
-        };
-        setTimeout(enhanceProductCells, 800);
-        return;
+        window.renderResults = function(d) { origRR(d); setTimeout(enhanceProductCells, 100); };
       }
-      if (role === 'admin' && typeof renderOrders === 'function') {
-        clearInterval(timer);
+      if (role === 'admin' && typeof renderOrders === 'function' && !patchApplied) {
+        patchApplied = true;
         var origRO = renderOrders;
-        window.renderOrders = function(e) {
-          origRO(e);
-          setTimeout(enhanceProductCells, 100);
-        };
-        setTimeout(enhanceProductCells, 500);
-        return;
+        window.renderOrders = function(e) { origRO(e); setTimeout(enhanceProductCells, 100); };
       }
     } catch(e) {}
-    if (tries > 60) clearInterval(timer);
+    if (patchTries > 30) clearInterval(patchTimer);
   }, 200);
 })();
