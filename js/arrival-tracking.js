@@ -57,7 +57,10 @@
             var aq0 = parseInt(p0.arrived_qty) || 0;
             var mq0 = parseInt(p0.qty) || 0;
             var dotColor0 = aq0>=mq0&&mq0>0 ? '#639922' : aq0>0 ? '#e67e22' : '#ccc';
-            var compact = '<div style="font-size:11px;cursor:pointer;padding:4px 0" onclick="var ex=document.getElementById(\'arrpop_'+oid+'\');if(ex){ex.remove();return;}var d=document.createElement(\'div\');d.className=\'arrival-popup\';d.id=\'arrpop_'+oid+'\';d.style.cssText=\'position:absolute;z-index:999;margin-top:4px\';d.innerHTML=\''+buildPopupHTML(products, oid).replace(/'/g,"\\'")+'\';this.appendChild(d);event.stopPropagation()">';
+            var totalGot = products.reduce(function(s,p){return s+(parseInt(p.arrived_qty)||0)},0);
+            var totalAll = products.reduce(function(s,p){return s+(parseInt(p.qty)||0)},0);
+
+            var compact = '<div style="font-size:11px;cursor:pointer;padding:4px 0" onclick="var n=this.nextElementSibling;if(n&&n.className===\\'arrival-popup\\'){n.style.display=n.style.display===\\'none\\'?\\'block\\':\\'none\\'}">';
             compact += '<span style="color:'+dotColor0+';font-weight:700;margin-right:2px">'+(aq0>=mq0&&mq0>0?'●':'○')+'</span>';
             if (p0.brand) compact += '<span style="background:#e8f0fe;color:#1a56db;padding:1px 4px;border-radius:3px;margin-right:2px;font-size:10px">'+esc(p0.brand)+'</span>';
             compact += '<strong>'+esc(p0.model||'-')+'</strong>';
@@ -66,13 +69,12 @@
             compact += ' <span style="color:#aaa;font-size:10px">/'+mq0+'</span>';
             if (p0.delivery) compact += ' <span style="color:#888;font-size:10px;margin-left:2px">'+esc(p0.delivery)+'</span>';
             if (products.length > 1) {
-              var totalGot = products.reduce(function(s,p){return s+(parseInt(p.arrived_qty)||0)},0);
-              var totalAll = products.reduce(function(s,p){return s+(parseInt(p.qty)||0)},0);
               compact += ' <span style="color:#667eea;font-size:10px;text-decoration:underline;white-space:nowrap">+'+ (products.length-1) +'款</span>';
               compact += ' <span style="color:#888;font-size:9px">('+totalGot+'/'+totalAll+')</span>';
             }
             compact += '</div>';
-            cell.innerHTML = compact;
+            var popup = '<div class="arrival-popup" style="display:none;position:relative;z-index:99">'+buildPopupHTML(products, oid)+'</div>';
+            cell.innerHTML = compact + popup;
 
           } else {
             /* 业务员/管理员模式：完整展示 */
