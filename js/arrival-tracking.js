@@ -112,10 +112,15 @@
 
   /* 轮询增强：持续扫描DOM */
   var patchApplied = false;
+  var pollCount = 0;
   var pollTimer = setInterval(function(){
+    pollCount++;
     var cells = document.querySelectorAll('[data-pm]');
-    if (cells.length > 0) enhanceProductCells();
-  }, 1500);
+    if (cells.length > 0) {
+      enhanceProductCells();
+    }
+    if (pollCount > 20) clearInterval(pollTimer);
+  }, 800);
 
   /* 猴子补丁：让后续渲染也能自动增强 */
   var patchTries = 0;
