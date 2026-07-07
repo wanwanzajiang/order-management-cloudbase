@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>系统更新说明 - 2025.07.07</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2f5;color:#1e293b;line-height:1.8;padding:20px}
+  .container{max-width:800px;margin:0 auto}
+  h1{font-size:22px;text-align:center;padding:24px 0;color:#4f6ef7}
+  .date{text-align:center;color:#888;font-size:13px;margin-bottom:30px}
+  .card{background:#fff;border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  h2{font-size:16px;color:#4f6ef7;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e2e8f0}
+  h3{font-size:14px;margin:12px 0 6px;color:#334155}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-left:6px}
+  .badge-wh{background:#e8f0fe;color:#1a56db}.badge-sales{background:#fefce8;color:#92400e}.badge-admin{background:#f0fdf4;color:#166534}.badge-all{background:#f1f5f9;color:#475569}
+  ul{padding-left:20px;margin:8px 0}
+  li{margin:4px 0;font-size:13px}
+  .before{color:#888;text-decoration:line-through;margin-right:4px}
+  .after{color:#639922;font-weight:500}
+  .arrow{color:#667eea;margin:0 4px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+  th,td{border:1px solid #e2e8f0;padding:8px 12px;text-align:left}
+  th{background:#f8fafc;font-weight:600;font-size:12px;color:#64748b}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+  .dot-green{background:#639922}.dot-orange{background:#e67e22}.dot-gray{background:#ccc}
+  .tip{background:#f0fdf4;border-left:3px solid #22c55e;padding:10px 14px;margin:10px 0;font-size:13px;border-radius:4px}
+  .warn{background:#fefce8;border-left:3px solid #f59e0b;padding:10px 14px;margin:10px 0;font-size:13px;border-radius:4px}
+  .footer{text-align:center;color:#aaa;font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>订单进度回复系统 · 更新说明</h1>
+  <p class="date">2025年7月7日</p>
+
+  <div class="card">
+    <h2>一、产品到货数量追踪 <span class="badge badge-wh">操作员</span> <span class="badge badge-sales">业务员</span> <span class="badge badge-admin">管理员</span></h2>
+    <p style="font-size:14px;margin-bottom:10px">每个产品行新增到货数量记录，用圆点标识到货状态：</p>
+    <table>
+      <tr><th>圆点</th><th>颜色</th><th>含义</th></tr>
+      <tr><td><span class="dot dot-green"></span> ●</td><td>绿色</td><td>该型号已全部到货（到货数 ≥ 总数量）</td></tr>
+      <tr><td><span class="dot dot-orange"></span> ●</td><td>橙色</td><td>该型号部分到货（到货数 ＜ 总数量）</td></tr>
+      <tr><td><span class="dot dot-gray"></span> ○</td><td>灰色</td><td>该型号尚未到货</td></tr>
+    </table>
+
+    <h3>操作员怎么用</h3>
+    <ul>
+      <li>产品明细列中每个产品行有圆点 + 到货数量输入框 + "全部到货"按钮</li>
+      <li>输入到货数量后自动保存，圆点颜色即时更新（不刷新页面）</li>
+      <li>点击"全部到货"一键将该订单所有产品填满</li>
+      <li>型号过长自动省略号（...），鼠标悬停查看全文</li>
+    </ul>
+
+    <h3>业务员怎么看</h3>
+    <ul>
+      <li>订单卡片中每个产品行显示圆点 + 已到/总量（只读）</li>
+      <li>一目了然知道哪些产品到了、到了多少</li>
+    </ul>
+
+    <h3>管理员怎么看</h3>
+    <ul>
+      <li>订单列表产品明细列显示圆点 + 到货进度<br>
+        <span style="font-size:12px;color:#888">新增"完结"按钮，确认后可完结订单</span>
+      </li>
+    </ul>
+
+    <div class="tip">已到货数量存在数据库中，不会因刷新丢失。所有角色看到的数据实时同步。</div>
+  </div>
+
+  <div class="card">
+    <h2>二、通知增强 <span class="badge badge-sales">业务员</span></h2>
+    <p style="font-size:14px">操作员填到货数量后，对应业务员会收到通知：</p>
+    <ul>
+      <li><code>PA001 A型号 到 5/10 件</code> —— 单个产品到货</li>
+      <li><code>PA001 3款产品全部到齐</code> —— 全部到货</li>
+      <li><code>PA001 已完结</code> —— 订单完结</li>
+    </ul>
+    <div class="tip">业务员可在右上角铃铛图标查看所有通知。</div>
+  </div>
+
+  <div class="card">
+    <h2>三、管理员筛选 <span class="badge badge-admin">管理员</span></h2>
+    <p style="font-size:14px">筛选栏新增 <code>☐ 待完结</code> 复选框：</p>
+    <ul>
+      <li>勾选后只显示：<strong>已到货</strong> + <strong>业务员已填写发货时间</strong> + <strong>全部产品到齐</strong> 的订单</li>
+      <li>筛选后可直接点"完结"按钮完成订单</li>
+    </ul>
+    <div class="warn">待完结订单由管理员手动点击"完结"确认，不会自动完结。</div>
+  </div>
+
+  <div class="card">
+    <h2>四、其他优化 <span class="badge badge-all">全部</span></h2>
+    <ul>
+      <li>页面宽度从 1590px 扩至 1640px，减少横向滚动</li>
+      <li>型号名称过长自动省略号显示，鼠标悬停看全文</li>
+      <li>管理员拍照要求列过长自动省略号</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>五、操作示例</h2>
+    <h3>操作员录入到货数量</h3>
+    <ol style="padding-left:20px;font-size:13px">
+      <li>登录操作员面板</li>
+      <li>找到对应的订单行</li>
+      <li>在产品明细列输入每个产品的到货数量</li>
+      <li>输入后圆点自动变色（绿色=全到、橙色=部分到、灰色=未到）</li>
+      <li>全部到货后点击"全部到货"按钮一键填满</li>
+    </ol>
+    <h3 style="margin-top:16px">管理员完结订单</h3>
+    <ol style="padding-left:20px;font-size:13px">
+      <li>登录管理员面板</li>
+      <li>勾选"待完结"复选框</li>
+      <li>确认产品已全部到货、业务员已填写发货时间</li>
+      <li>点击"完结"按钮，确认后订单状态变为"已完结"</li>
+    </ol>
+  </div>
+
+  <p class="footer">如有问题请联系管理员</p>
+</div>
+</body>
+</html>
