@@ -120,25 +120,17 @@
           await origLO();
           setTimeout(enhanceProductCells, 100);
         };
+        setTimeout(enhanceProductCells, 500);
         return;
       }
-      if (role === 'sales' && typeof sfUpdate === 'function') {
+      if (role === 'sales' && typeof searchOrders === 'function') {
         clearInterval(timer);
-        var origSF = sfUpdate;
-        window.sfUpdate = async function() {
-          var result = await origSF.apply(this, arguments);
-          setTimeout(function(){
-            if (typeof searchOrders === 'function') searchOrders();
-          }, 200);
-          return result;
-        };
         var origSearch = searchOrders;
-        if (typeof searchOrders === 'function') {
-          window.searchOrders = function() {
-            origSearch.apply(this, arguments);
-            setTimeout(enhanceProductCells, 100);
-          };
-        }
+        window.searchOrders = function() {
+          origSearch.apply(this, arguments);
+          setTimeout(enhanceProductCells, 100);
+        };
+        setTimeout(enhanceProductCells, 500);
         return;
       }
       if (role === 'admin' && typeof renderOrders === 'function') {
@@ -148,6 +140,7 @@
           origRO(e);
           setTimeout(enhanceProductCells, 100);
         };
+        setTimeout(enhanceProductCells, 500);
         return;
       }
     } catch(e) {}
