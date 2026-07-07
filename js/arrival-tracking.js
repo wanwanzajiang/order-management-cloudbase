@@ -86,7 +86,7 @@
         API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
           var cell = el.closest('[data-pm]');
           if (cell) { cell.setAttribute('data-pm', JSON.stringify(pm)); enhanceProductCells(); }
-          if (typeof Notifications !== 'undefined') Notifications.create(o.salesperson_name, o.invoice_no, (pm[idx].model||'型号'+(idx+1))+'到'+val+'/'+(pm[idx].qty||0)+'件', oid);
+          Notifications.create(o.salesperson_name, o.invoice_no, (pm[idx].model||'型号'+(idx+1))+'到'+val+'/'+(pm[idx].qty||0)+'件', oid).catch(function(){});
         }).catch(function(){});
       }).catch(function(){});
     },
@@ -100,7 +100,7 @@
         API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
           var cell = el.closest('[data-pm]');
           if (cell) { cell.setAttribute('data-pm', JSON.stringify(pm)); enhanceProductCells(); }
-          if (typeof Notifications !== 'undefined') Notifications.create(o.salesperson_name, o.invoice_no, pm.length+'款产品全部到齐', oid);
+          Notifications.create(o.salesperson_name, o.invoice_no, pm.length+'款产品全部到齐', oid).catch(function(){});
         }).catch(function(){});
       }).catch(function(){});
     },
@@ -112,7 +112,7 @@
         API.updateOrder(oid, {order_status: '已完结'}).then(function(r2) {
           if (r2.error) { if (typeof showToast === 'function') showToast('完结失败: '+r2.error.message, 'error'); return; }
           if (typeof showToast === 'function') showToast('✅ 订单已完结', 'success');
-          if (typeof Notifications !== 'undefined') Notifications.create(o.salesperson_name, o.invoice_no, '已完结', oid);
+          Notifications.create(o.salesperson_name, o.invoice_no, '已完结', oid).catch(function(){});
           setTimeout(function() { if (typeof loadOrders === 'function') loadOrders(); }, 500);
         }).catch(function(e) {
           if (typeof showToast === 'function') showToast('完结失败: '+(e.message||''), 'error');
