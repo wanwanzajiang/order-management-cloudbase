@@ -13,7 +13,7 @@
  </tr></thead><tbody>`;e.forEach(e=>{var t=renderProductDetail(e.product_model),r={"调货中":"status-pending","路途中":"status-transit","已到货":"status-arrived","已完结":"status-completed"}[e.order_status]||"",o=e._id||e.id;a+=`<tr>
  <td><strong>${App.escapeHtml(e.invoice_no)}</strong></td>
  <td>${e.order_date||"-"}</td>
- <td style="min-width:200px;" data-pm="${App.escapeHtml(e.product_model||'')}">${t}</td>
+ <td style="min-width:200px;" data-pm='${e.product_model||""}'>${t}</td>
  <td><strong>${e.quantity||"-"}</strong></td>
  <td><span class="status-badge ${r}">${e.order_status||"待填写"}</span></td>
  <td>${App.escapeHtml(e.salesperson_name||"-")}</td>
