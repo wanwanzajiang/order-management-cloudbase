@@ -18,7 +18,7 @@
  <td><span class="status-badge ${r}">${e.order_status||"待填写"}</span></td>
  <td>${App.escapeHtml(e.salesperson_name||"-")}</td>
  <td>${e.shipping_date||"-"}</td>
- <td style="text-align:center;">${e.photo_request?"✅":"-"}</td><td style="max-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${App.escapeHtml(e.photo_notes||"")}">${App.escapeHtml(e.photo_notes||"-")}</td><td style="text-align:center;">${e.bring_goods?"✅":"-"}</td><td style="white-space:nowrap;">${e.inspection_date||"-"}</td><td style="white-space:nowrap;">${e.return_date||"-"}</td>
+ <td style="text-align:center;">${e.photo_request?"✅":"-"}</td><td style="max-width:100px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td><td style="text-align:center;">${e.bring_goods?"✅":"-"}</td><td style="white-space:nowrap;">${e.inspection_date||"-"}</td><td style="white-space:nowrap;">${e.return_date||"-"}</td>
  <td>${e.delivery_date||"-"}</td>
  <td style="white-space:nowrap;font-size:12px;color:#999;">${App.formatDate(e.created_at)}</td>
  <td><button class="btn btn-danger btn-sm" onclick="deleteOrder('${o}')">删除</button> <button class="btn btn-sm" style="background:#f0f4ff;color:#667eea;border:1px solid #d0d8f0" onclick="editProducts('${o}')">编辑</button> <button class="btn btn-sm" style="background:#eaf3de;color:#639922;border:1px solid #b8d98a;font-weight:600" onclick="ARRIVAL.completeOrder('${o}')">完结</button></td>
