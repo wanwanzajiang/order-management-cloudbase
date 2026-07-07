@@ -42,7 +42,7 @@
             if (role === 'warehouse') {
               var row = cell.closest('tr[data-id]');
               var oid = row ? row.getAttribute('data-id') : '';
-              html += '<input type="number" min="0" max="'+mq+'" value="'+aq+'" style="width:30px;padding:1px 3px;font-size:11px;border:1px solid #667eea;border-radius:3px;text-align:center" onchange="ARRIVAL.updateQty(this)" data-oid="'+oid+'" data-idx="'+i+'" data-mq="'+mq+'" onfocus="this.select()">';
+              html += '<input type="number" min="0" max="'+mq+'" value="'+aq+'" style="width:38px;padding:1px 3px;font-size:11px;border:1px solid #667eea;border-radius:3px;text-align:center" onchange="ARRIVAL.updateQty(this)" data-oid="'+oid+'" data-idx="'+i+'" data-mq="'+mq+'" onfocus="this.select()">';
               html += ' <span style="color:#aaa;font-size:10px">/'+mq+'</span>';
             } else if (role === 'sales') {
               var txtColor = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#999';
@@ -82,7 +82,9 @@
         if (!r.data || !r.data[0]) return;
         var pm = JSON.parse(r.data[0].product_model || '[]');
         if (idx >= 0 && idx < pm.length) pm[idx].arrived_qty = val;
-        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){}).catch(function(){});
+        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
+          if (typeof loadOrders === 'function') loadOrders();
+        }).catch(function(){});
       }).catch(function(){});
     },
     fillAll: function(el) {
@@ -91,7 +93,9 @@
         if (!r.data || !r.data[0]) return;
         var pm = JSON.parse(r.data[0].product_model || '[]');
         pm.forEach(function(p) { p.arrived_qty = p.qty || 0; });
-        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){}).catch(function(){});
+        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
+          if (typeof loadOrders === 'function') loadOrders();
+        }).catch(function(){});
       }).catch(function(){});
     },
     completeOrder: function(oid) {
@@ -99,7 +103,7 @@
       API.updateOrder(oid, {order_status: '已完结'}).then(function(r) {
         if (r.error) { if (typeof showToast === 'function') showToast('完结失败: '+r.error.message, 'error'); return; }
         if (typeof showToast === 'function') showToast('✅ 订单已完结', 'success');
-        setTimeout(function() { if (typeof loadOrders === "function") loadOrders(); }, 500);
+        setTimeout(function() { if (typeof loadOrders === 'function') loadOrders(); }, 500);
       }).catch(function(e) {
         if (typeof showToast === 'function') showToast('完结失败: '+(e.message||''), 'error');
       });
@@ -108,10 +112,15 @@
 
   /* 轮询增强：持续扫描DOM */
   var patchApplied = false;
+  var pollCount = 0;
   var pollTimer = setInterval(function(){
+    pollCount++;
     var cells = document.querySelectorAll('[data-pm]');
-    if (cells.length > 0) enhanceProductCells();
-  }, 1500);
+    if (cells.length > 0) {
+      enhanceProductCells();
+    }
+    if (pollCount > 20) clearInterval(pollTimer);
+  }, 800);
 
   /* 猴子补丁：让后续渲染也能自动增强 */
   var patchTries = 0;
