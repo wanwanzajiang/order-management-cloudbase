@@ -95,7 +95,8 @@
         var pm = JSON.parse(r.data[0].product_model || '[]');
         pm.forEach(function(p) { p.arrived_qty = p.qty || 0; });
         API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
-          if (typeof loadOrders === 'function') loadOrders();
+          var cell = el.closest('[data-pm]');
+          if (cell) { cell.setAttribute('data-pm', JSON.stringify(pm)); enhanceProductCells(); }
         }).catch(function(){});
       }).catch(function(){});
     },
