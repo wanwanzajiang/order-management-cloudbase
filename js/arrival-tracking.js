@@ -33,7 +33,7 @@
     });
     h += '<div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">';
     h += '<button onclick="ARRIVAL.fillAll(this)" data-oid="'+oid+'" style="font-size:11px;padding:3px 12px;background:#eaf3de;color:#639922;border:1px solid #b8d98a;border-radius:4px;cursor:pointer">全部到货</button>';
-    h += '<button onclick="var p=this.closest(\'.arrival-popup\');if(p)p.remove()" style="font-size:11px;padding:3px 12px;background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:4px;cursor:pointer">关闭</button>';
+    h += '<button onclick="var p=this.closest(\'.arrival-popup\');if(p)p.style.display=\'none\'" style="font-size:11px;padding:3px 12px;background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:4px;cursor:pointer">关闭</button>';
     h += '</div></div>';
     return h;
   }
@@ -60,7 +60,7 @@
             var totalGot = products.reduce(function(s,p){return s+(parseInt(p.arrived_qty)||0)},0);
             var totalAll = products.reduce(function(s,p){return s+(parseInt(p.qty)||0)},0);
 
-            var compact = '<div style="font-size:11px;cursor:pointer;padding:4px 0" onclick="var n=this.nextElementSibling;if(n&&n.className===\\'arrival-popup\\'){n.style.display=n.style.display===\\'none\\'?\\'block\\':\\'none\\'}">';
+            var compact = '<div style="font-size:11px;cursor:pointer;padding:4px 0" onclick="var s=this.nextElementSibling;if(s&&s.classList.contains(\'arrival-popup\'))s.style.display=s.style.display==\'none\'?\'block\':\'none\'">';
             compact += '<span style="color:'+dotColor0+';font-weight:700;margin-right:2px">'+(aq0>=mq0&&mq0>0?'●':'○')+'</span>';
             if (p0.brand) compact += '<span style="background:#e8f0fe;color:#1a56db;padding:1px 4px;border-radius:3px;margin-right:2px;font-size:10px">'+esc(p0.brand)+'</span>';
             compact += '<strong>'+esc(p0.model||'-')+'</strong>';
