@@ -6,13 +6,6 @@
     : page.indexOf('admin')>=0 ? 'admin' : '';
   if (!role) return;
 
-  /* 全局弹窗 */
-  var modal = document.createElement('div');
-  modal.id = '__arrivalModal';
-  modal.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9999;align-items:center;justify-content:center';
-  modal.onclick = function(e){if(e.target===modal)modal.style.display='none'};
-  document.body.appendChild(modal);
-
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s || '';
@@ -31,50 +24,46 @@
           if (!Array.isArray(products)) return;
 
           var html = '<div style="font-size:11px;">';
+          products.forEach(function(p, i) {
+            var aq = parseInt(p.arrived_qty) || 0;
+            var mq = parseInt(p.qty) || 0;
+            var dotColor = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#ccc';
+            var dotTitle = aq>=mq&&mq>0 ? '全到' : aq>0 ? '到部分' : '未到';
+            var dot = '<span style="color:'+dotColor+';font-weight:700;font-size:12px" title="'+dotTitle+'">'+(aq>=mq&&mq>0?'●':'○')+'</span> ';
+            var brand = p.brand ? '<span style="background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-right:3px;font-size:10px;">'+esc(p.brand)+'</span>' : '';
+            var model = '<strong>'+esc(p.model||'-')+'</strong>';
+            var qtySpan = mq ? '<span style="color:#e67e22;">×'+mq+'</span>' : '';
+            var delivery = p.delivery ? '<span style="color:#888;font-size:10px;margin-left:4px;">'+esc(p.delivery)+'</span>' : '';
+            var sep = i>0 ? 'border-top:1px dotted #eee;' : '';
+
+            html += '<div style="padding:2px 0;'+sep+'">';
+            html += dot + brand + model + ' ' + qtySpan + ' ';
+
+            if (role === 'warehouse') {
+              var row = cell.closest('tr[data-id]');
+              var oid = row ? row.getAttribute('data-id') : '';
+              html += '<input type="number" min="0" max="'+mq+'" value="'+aq+'" style="width:30px;padding:1px 3px;font-size:11px;border:1px solid #667eea;border-radius:3px;text-align:center" onchange="ARRIVAL.updateQty(this)" data-oid="'+oid+'" data-idx="'+i+'" data-mq="'+mq+'" onfocus="this.select()">';
+              html += ' <span style="color:#aaa;font-size:10px">/'+mq+'</span>';
+            } else if (role === 'sales') {
+              var txtColor = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#999';
+              html += '<span style="font-size:11px;color:'+txtColor+'">'+aq+'/'+mq+'</span>';
+            } else {
+              var txtColor2 = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#999';
+              html += '<span style="font-size:10px;color:'+txtColor2+'">('+aq+'/'+mq+')</span>';
+            }
+            html += delivery + '</div>';
+          });
+
           if (role === 'warehouse') {
             var row = cell.closest('tr[data-id]');
-            var oid = row ? row.getAttribute('data-id') : '';
-            var p0 = products[0];
-            var aq0 = parseInt(p0.arrived_qty) || 0;
-            var mq0 = parseInt(p0.qty) || 0;
-            var dotColor0 = aq0>=mq0&&mq0>0 ? '#639922' : aq0>0 ? '#e67e22' : '#ccc';
-            var totalGot = products.reduce(function(s,p){return s+(parseInt(p.arrived_qty)||0)},0);
-            var totalAll = products.reduce(function(s,p){return s+(parseInt(p.qty)||0)},0);
-            html += '<div style="cursor:pointer;padding:2px 0;word-break:break-word;max-width:250px" onclick="ARRIVAL.showModal(this)">';
-            html += '<span style="color:'+dotColor0+';font-weight:700;margin-right:2px">'+(aq0>=mq0&&mq0>0?'●':'○')+'</span>';
-            if (p0.brand) html += '<span style="background:#e8f0fe;color:#1a56db;padding:1px 4px;border-radius:3px;margin-right:2px;font-size:10px">'+esc(p0.brand)+'</span>';
-            html += '<strong>'+esc(p0.model||'-')+'</strong>';
-            if (mq0) html += '<span style="color:#e67e22"> ×'+mq0+'</span>';
-            html += '<span style="color:#aaa;font-size:10px">('+aq0+'/'+mq0+')</span>';
-            if (p0.delivery) html += '<span style="color:#888;font-size:10px;margin-left:2px">'+esc(p0.delivery)+'</span>';
-            if (products.length > 1) html += '<span style="color:#667eea;font-size:10px;white-space:nowrap;margin-left:4px"> +'+(products.length-1)+'款</span>';
-            if (totalAll > 0) html += '<span style="color:#888;font-size:9px;margin-left:2px">'+totalGot+'/'+totalAll+'</span>';
-            html += '</div>';
-          } else {
-            products.forEach(function(p, i) {
-              var aq = parseInt(p.arrived_qty) || 0;
-              var mq = parseInt(p.qty) || 0;
-              var dotColor = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#ccc';
-              var dotTitle = aq>=mq&&mq>0 ? '全到' : aq>0 ? '到部分' : '未到';
-              var dot = '<span style="color:'+dotColor+';font-weight:700;font-size:12px" title="'+dotTitle+'">'+(aq>=mq&&mq>0?'●':'○')+'</span> ';
-              var brand = p.brand ? '<span style="background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-right:3px;font-size:10px;">'+esc(p.brand)+'</span>' : '';
-              var model = '<strong>'+esc(p.model||'-')+'</strong>';
-              var qtySpan = mq ? '<span style="color:#e67e22;">×'+mq+'</span>' : '';
-              var delivery = p.delivery ? '<span style="color:#888;font-size:10px;margin-left:4px;">'+esc(p.delivery)+'</span>' : '';
-              var sep = i>0 ? 'border-top:1px dotted #eee;' : '';
-              html += '<div style="padding:2px 0;'+sep+'">';
-              html += dot + brand + model + ' ' + qtySpan + ' ';
-              if (role === 'sales') {
-                var txtColor = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#999';
-                html += '<span style="font-size:11px;color:'+txtColor+'">'+aq+'/'+mq+'</span>';
-              } else {
-                var txtColor2 = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#999';
-                html += '<span style="font-size:10px;color:'+txtColor2+'">('+aq+'/'+mq+')</span>';
-              }
-              html += delivery + '</div>';
-            });
+            if (row) {
+              var oid = row.getAttribute('data-id');
+              html += '<button onclick="ARRIVAL.fillAll(this)" data-oid="'+oid+'" style="margin-top:4px;font-size:11px;padding:2px 10px;background:#eaf3de;color:#639922;border:1px solid #b8d98a;border-radius:4px;cursor:pointer" title="一键填满所有产品到货数量">全部到货</button>';
+            }
           }
-          html += '</div>'; } catch(e) {}
+          html += '</div>';
+          cell.innerHTML = html;
+        } catch(e) {}
       });
     } catch(e) {}
   }
@@ -118,40 +107,6 @@
       }).catch(function(e) {
         if (typeof showToast === 'function') showToast('完结失败: '+(e.message||''), 'error');
       });
-    },
-    showModal: function(el) {
-      var cell = el.closest('[data-pm]');
-      if (!cell) return;
-      var raw = cell.getAttribute('data-pm');
-      var products;
-      try { products = JSON.parse(raw); } catch(e) { return; }
-      if (!Array.isArray(products)) return;
-      var row = cell.closest('tr[data-id]');
-      var oid = row ? row.getAttribute('data-id') : '';
-      var inv = row ? (row.querySelector('td:first-child')||{}).textContent : '';
-      var h = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.2)" onclick="event.stopPropagation()">';
-      h += '<div style="font-size:16px;font-weight:600;margin-bottom:16px">'+esc(inv)+' 到货状态</div>';
-      products.forEach(function(p, i) {
-        var aq = parseInt(p.arrived_qty) || 0;
-        var mq = parseInt(p.qty) || 0;
-        var dc = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#ccc';
-        var sep = i>0 ? 'border-top:1px solid #eee;' : '';
-        h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;'+sep+'">';
-        h += '<span style="color:'+dc+';font-weight:700;font-size:14px">'+(aq>=mq&&mq>0?'●':'○')+'</span>';
-        if (p.brand) h += '<span style="background:#e8f0fe;color:#1a56db;padding:2px 6px;border-radius:4px;font-size:11px">'+esc(p.brand)+'</span>';
-        h += '<strong>'+esc(p.model||'-')+'</strong>';
-        if (mq) h += '<span style="color:#e67e22">×'+mq+'</span>';
-        h += '<input type="number" min="0" max="'+mq+'" value="'+aq+'" style="width:50px;padding:4px 8px;font-size:13px;border:1px solid #667eea;border-radius:4px;text-align:center" onchange="ARRIVAL.updateQty(this)" data-oid="'+oid+'" data-idx="'+i+'" data-mq="'+mq+'">';
-        h += '<span style="color:#aaa;font-size:12px">/'+mq+'</span>';
-        if (p.delivery) h += '<span style="color:#888;font-size:11px">'+esc(p.delivery)+'</span>';
-        h += '</div>';
-      });
-      h += '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">';
-      h += '<button onclick="ARRIVAL.fillAll(this)" data-oid="'+oid+'" style="padding:6px 16px;background:#eaf3de;color:#639922;border:1px solid #b8d98a;border-radius:6px;cursor:pointer;font-size:13px">全部到货</button>';
-      h += '<button onclick="document.getElementById(\'__arrivalModal\').style.display=\'none\'" style="padding:6px 16px;background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">关闭</button>';
-      h += '</div></div>';
-      modal.innerHTML = h;
-      modal.style.display = 'flex';
     }
   };
 
