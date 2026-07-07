@@ -11,7 +11,7 @@
  </div>
  </div>
  <div class="oc-body">
- <div class="oc-products"><div class="pi-card">${renderProducts(e.product_model)}</div></div>
+ <div class="oc-products"><div class="pi-card" data-pm="${App.escapeHtml(e.product_model||'')}">${renderProducts(e.product_model)}</div></div>
  <div class="oc-info">
  <div class="oc-info-row">📦 数量：<strong>${e.quantity||"-"}</strong></div>
  <div class="oc-info-row">🚚 预计发货时间：${e.shipping_date||'<span style="color:#ccc;">待填写</span>'}</div>
@@ -101,4 +101,5 @@ setInterval(function(){
 }, 30000);
 </script>
 
+<script src="js/arrival-tracking.js"></script>
 </html>

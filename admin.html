@@ -13,7 +13,7 @@
  </tr></thead><tbody>`;e.forEach(e=>{var t=renderProductDetail(e.product_model),r={"调货中":"status-pending","路途中":"status-transit","已到货":"status-arrived","已完结":"status-completed"}[e.order_status]||"",o=e._id||e.id;a+=`<tr>
  <td><strong>${App.escapeHtml(e.invoice_no)}</strong></td>
  <td>${e.order_date||"-"}</td>
- <td style="min-width:200px;">${t}</td>
+ <td style="min-width:200px;" data-pm="${App.escapeHtml(e.product_model||'')}">${t}</td>
  <td><strong>${e.quantity||"-"}</strong></td>
  <td><span class="status-badge ${r}">${e.order_status||"待填写"}</span></td>
  <td>${App.escapeHtml(e.salesperson_name||"-")}</td>
@@ -21,7 +21,7 @@
  <td style="text-align:center;">${e.photo_request?"✅":"-"}</td><td style="max-width:100px;font-size:11px;">${App.escapeHtml(e.photo_notes||"-")}</td><td style="text-align:center;">${e.bring_goods?"✅":"-"}</td><td style="white-space:nowrap;">${e.inspection_date||"-"}</td><td style="white-space:nowrap;">${e.return_date||"-"}</td>
  <td>${e.delivery_date||"-"}</td>
  <td style="white-space:nowrap;font-size:12px;color:#999;">${App.formatDate(e.created_at)}</td>
- <td><button class="btn btn-danger btn-sm" onclick="deleteOrder('${o}')">删除</button> <button class="btn btn-sm" style="background:#f0f4ff;color:#667eea;border:1px solid #d0d8f0" onclick="editProducts('${o}')">编辑</button></td>
+ <td><button class="btn btn-danger btn-sm" onclick="deleteOrder('${o}')">删除</button> <button class="btn btn-sm" style="background:#f0f4ff;color:#667eea;border:1px solid #d0d8f0" onclick="editProducts('${o}')">编辑</button> <button class="btn btn-sm" style="background:#eaf3de;color:#639922;border:1px solid #b8d98a;font-weight:600" onclick="ARRIVAL.completeOrder('${o}')">完结</button></td>
  </tr>`}),a+="</tbody></table></div>",t.innerHTML=a}else App.showEmpty(t,"暂无订单数据")}async function loadSalespeopleList(){var e=document.getElementById("spContainer"),{data:t,error:r}=(App.showLoading(e),await API.getAllSalespeople(!0));r?App.showError(e,"加载失败: "+r.message):t&&0!==t.length?renderSalespeople(t):App.showEmpty(e,"暂无业务员")}(function(){var _origRS=renderSalespeople;renderSalespeople=function(list){var c=document.getElementById("spContainer");if(c&&list)c._spCache={};if(list)list.forEach(function(s){c._spCache[s.id||s._id]=s});return _origRS.apply(this,arguments)}})();function renderSalespeople(e){var t=document.getElementById("spContainer");let o='<div class="table-wrapper"><table><thead><tr><th>业务员姓名</th><th>识别码</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';e.forEach(e=>{var t=!1!==e.is_active,r=e._id||e.id;o+=`<tr data-id="${r}">
  <td><input type="text" class="inline-edit" id="spname-${r}" value="${App.escapeHtml(e.name)}" style="width:120px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;" ${t?"":'disabled style="background:#f5f5f5;color:#999;"'}></td>
  <td><input type="text" class="inline-edit" id="spcode-${r}" value="${App.escapeHtml(e.access_code||"")}" style="width:100px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;"></td>
@@ -129,4 +129,5 @@ async function saveProductEdit(){if(!_editOrderId)return;var e=document.getEleme
 
 
 
+<script src="js/arrival-tracking.js"></script>
 </body></html>
