@@ -31,7 +31,7 @@
             var dotTitle = aq>=mq&&mq>0 ? '全到' : aq>0 ? '到部分' : '未到';
             var dot = '<span style="color:'+dotColor+';font-weight:700;font-size:12px" title="'+dotTitle+'">'+(aq>=mq&&mq>0?'●':'○')+'</span> ';
             var brand = p.brand ? '<span style="background:#e8f0fe;color:#1a56db;padding:1px 5px;border-radius:3px;margin-right:3px;font-size:10px;">'+esc(p.brand)+'</span>' : '';
-            var model = '<strong>'+esc(p.model||'-')+'</strong>';
+            var model = '<span style="display:inline-block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom" title="'+esc(p.model||'-')+'"><strong>'+esc(p.model||'-')+'</strong></span>';
             var qtySpan = mq ? '<span style="color:#e67e22;">×'+mq+'</span>' : '';
             var delivery = p.delivery ? '<span style="color:#888;font-size:10px;margin-left:4px;">'+esc(p.delivery)+'</span>' : '';
             var sep = i>0 ? 'border-top:1px dotted #eee;' : '';
