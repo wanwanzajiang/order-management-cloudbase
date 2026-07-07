@@ -42,7 +42,7 @@
             if (role === 'warehouse') {
               var row = cell.closest('tr[data-id]');
               var oid = row ? row.getAttribute('data-id') : '';
-              html += '<input type="number" min="0" max="'+mq+'" value="'+aq+'" style="width:30px;padding:1px 3px;font-size:11px;border:1px solid #667eea;border-radius:3px;text-align:center" onchange="ARRIVAL.updateQty(this)" data-oid="'+oid+'" data-idx="'+i+'" data-mq="'+mq+'" onfocus="this.select()">';
+              html += '<input type="number" min="0" max="'+mq+'" value="'+aq+'" style="width:38px;padding:1px 3px;font-size:11px;border:1px solid #667eea;border-radius:3px;text-align:center" onchange="ARRIVAL.updateQty(this)" data-oid="'+oid+'" data-idx="'+i+'" data-mq="'+mq+'" onfocus="this.select()">';
               html += ' <span style="color:#aaa;font-size:10px">/'+mq+'</span>';
             } else if (role === 'sales') {
               var txtColor = aq>=mq&&mq>0 ? '#639922' : aq>0 ? '#e67e22' : '#999';
