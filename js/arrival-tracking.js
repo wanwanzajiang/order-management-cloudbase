@@ -83,7 +83,8 @@
         var pm = JSON.parse(r.data[0].product_model || '[]');
         if (idx >= 0 && idx < pm.length) pm[idx].arrived_qty = val;
         API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
-          if (typeof loadOrders === 'function') loadOrders();
+          var cell = el.closest('[data-pm]');
+          if (cell) { cell.setAttribute('data-pm', JSON.stringify(pm)); enhanceProductCells(); }
         }).catch(function(){});
       }).catch(function(){});
     },
