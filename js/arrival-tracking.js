@@ -82,9 +82,7 @@
         if (!r.data || !r.data[0]) return;
         var pm = JSON.parse(r.data[0].product_model || '[]');
         if (idx >= 0 && idx < pm.length) pm[idx].arrived_qty = val;
-        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
-          if (
-        }).catch(function(){});
+        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){}).catch(function(){});
       }).catch(function(){});
     },
     fillAll: function(el) {
@@ -93,9 +91,7 @@
         if (!r.data || !r.data[0]) return;
         var pm = JSON.parse(r.data[0].product_model || '[]');
         pm.forEach(function(p) { p.arrived_qty = p.qty || 0; });
-        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){
-          if (
-        }).catch(function(){});
+        API.updateOrder(oid, {product_model: JSON.stringify(pm)}).then(function(){}).catch(function(){});
       }).catch(function(){});
     },
     completeOrder: function(oid) {
@@ -103,7 +99,7 @@
       API.updateOrder(oid, {order_status: '已完结'}).then(function(r) {
         if (r.error) { if (typeof showToast === 'function') showToast('完结失败: '+r.error.message, 'error'); return; }
         if (typeof showToast === 'function') showToast('✅ 订单已完结', 'success');
-        setTimeout(function() { if ( }, 500);
+        setTimeout(function() { if (typeof loadOrders === "function") loadOrders(); }, 500);
       }).catch(function(e) {
         if (typeof showToast === 'function') showToast('完结失败: '+(e.message||''), 'error');
       });
