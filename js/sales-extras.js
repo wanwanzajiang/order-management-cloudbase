@@ -2,37 +2,34 @@
 (function(){
   if (location.pathname.indexOf('sales') < 0) return;
 
-  function getCard(id) { return document.getElementById('card_' + id); }
+  var lock = false;
 
-  /* 拦截所有change事件，在捕获阶段优先判断 */
   document.addEventListener('change', function(e){
+    if (lock) return;
     var el = e.target;
-    if (!el) return;
+    var card = el.closest('[id^="card_"]');
+    if (!card) return;
 
-    /* 是否带来select变动 */
-    if (el.tagName === 'SELECT' && el.closest('[id^="card_"]')) {
-      if (el.value === 'true') {
-        var card = el.closest('[id^="card_"]');
-        var inp = card.querySelector('input[type="date"]');
-        if (inp && !inp.value) {
-          e.stopImmediatePropagation();
-          el.value = '';
-          if (typeof showToast === 'function') showToast('请先选择验货时间（货什么时候带来？）', 'warning');
-          return;
-        }
+    var inp = card.querySelector('input[type="date"]');
+    var sel = card.querySelector('select');
+
+    /* 是否带来选"是" → 必须有验货时间 */
+    if (el === sel && el.value === 'true') {
+      if (inp && !inp.value) {
+        lock = true;
+        el.value = '';
+        showToast('请先选择验货时间（货什么时候带来？）', 'warning');
+        setTimeout(function(){ lock = false; }, 300);
       }
     }
 
-    /* 验货时间变动 */
-    if (el.type === 'date' && el.closest('[id^="card_"]')) {
-      if (el.value) {
-        var card = el.closest('[id^="card_"]');
-        var sel = card.querySelector('select');
-        if (sel && sel.value !== 'true') {
-          e.stopImmediatePropagation();
-          el.value = '';
-          if (typeof showToast === 'function') showToast('请确保已选择是否带来：是', 'warning');
-        }
+    /* 选验货时间 → 必须已选"是否带来=是" */
+    if (el === inp && el.value) {
+      if (sel && sel.value !== 'true') {
+        lock = true;
+        el.value = '';
+        showToast('请确保已选择是否带来：是', 'warning');
+        setTimeout(function(){ lock = false; }, 300);
       }
     }
   }, true);
