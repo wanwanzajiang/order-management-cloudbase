@@ -7,39 +7,32 @@
     tries++;
     if (typeof sfUpdate === 'function') {
       clearInterval(timer);
-      var orig = sfUpdate;
+      var orig = window.sfUpdate;
 
-      window.sfUpdate = function(e, t, n) {
-        /* 选"是否带来=是"时，检查验货时间 */
-        if (t === 'bring_goods' && (n === true || n === 'true')) {
-          var card = document.getElementById('card_' + e);
+      window.sfUpdate = function(id, field, value) {
+        var card = document.getElementById('card_' + id);
+
+        if (field === 'bring_goods' && (value === true || value === 'true')) {
           if (card) {
-            var insp = card.querySelector('[onchange*="inspection_date"]');
-            if (insp && !insp.value) {
-              if (typeof showToast === 'function') {
-                showToast('请先选择验货时间（货什么时候带来？）', 'warning');
-              }
+            var inp = card.querySelector('input[type="date"]');
+            if (inp && !inp.value) {
+              if (typeof showToast === 'function') showToast('请先选择验货时间（货什么时候带来？）', 'warning');
               return;
             }
           }
         }
 
-        /* 填验货时间时，检查是否带来 */
-        if (t === 'inspection_date' && n) {
-          var card = document.getElementById('card_' + e);
+        if (field === 'inspection_date' && value) {
           if (card) {
-            var bg = card.querySelector('[onchange*="bring_goods"]');
-            if (!bg) bg = card.querySelector('select'); /* fallback */
-            if (bg && bg.value !== 'true') {
-              if (typeof showToast === 'function') {
-                showToast('请确保已选择是否带来：是', 'warning');
-              }
+            var sel = card.querySelector('select');
+            if (sel && sel.value !== 'true') {
+              if (typeof showToast === 'function') showToast('请确保已选择是否带来：是', 'warning');
               return;
             }
           }
         }
 
-        orig(e, t, n);
+        return orig(id, field, value);
       };
     }
     if (tries > 30) clearInterval(timer);
